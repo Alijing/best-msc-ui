@@ -4,11 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a3f877b-3353-493e-8d13-490ccfbcc3ba" name="Changes" comment="" />
+    <list default="true" id="8a3f877b-3353-493e-8d13-490ccfbcc3ba" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/best_msc_ui.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/components/LoginForm.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pages/login.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plugins/auth.client.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/prompt.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/开发规范文档.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Vue Composition API Component" />
+        <option value="TypeScript File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -23,9 +40,9 @@
       </MavenGeneralSettings>
     </option>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="3ArzfEbon1WFFpZaWiewkfmw8sz" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -37,9 +54,19 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Rainbow Brackets",
+    "ts.external.directory.path": "D:\\alijing\\my\\code\\best_msc_ui\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "vue.recent.templates": [
+      "Vue Composition API Component"
+    ]
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -58,7 +85,16 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1773365583440</updated>
-      <workItem from="1773365584906" duration="5000" />
+      <workItem from="1773365584906" duration="19881000" />
+      <workItem from="1773623907302" duration="43545000" />
+      <workItem from="1773798369572" duration="7231000" />
+      <workItem from="1773886548037" duration="1666000" />
+      <workItem from="1773970681798" duration="17130000" />
+      <workItem from="1774062978128" duration="1249000" />
+      <workItem from="1774229497375" duration="11797000" />
+      <workItem from="1774245921024" duration="13144000" />
+      <workItem from="1774318129645" duration="3883000" />
+      <workItem from="1774409172321" duration="16575000" />
     </task>
     <servers />
   </component>

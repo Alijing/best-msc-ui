@@ -1,137 +1,14 @@
 <template>
-  <div class="login-page w-96 p-8 bg-white rounded-lg shadow-xl">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">BestMSC</h1>
-      <p class="text-gray-500">管理后台</p>
-    </div>
-
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="rules"
-      label-width="0px"
-      size="large"
-    >
-      <el-form-item prop="account">
-        <el-input
-          v-model="formData.account"
-          placeholder="请输入账号"
-          :prefix-icon="'User'"
-          clearable
-        />
-      </el-form-item>
-
-      <el-form-item prop="password">
-        <el-input
-          v-model="formData.password"
-          type="password"
-          placeholder="请输入密码"
-          :prefix-icon="'Lock'"
-          show-password
-          @keyup.enter="handleSubmit"
-        />
-      </el-form-item>
-
-      <el-form-item>
-        <div class="flex-between w-full">
-          <el-checkbox>记住我</el-checkbox>
-          <el-link type="primary" :underline="false">忘记密码？</el-link>
-        </div>
-      </el-form-item>
-
-      <el-form-item>
-        <el-button
-          type="primary"
-          size="large"
-          :loading="loading"
-          class="w-full"
-          @click="handleSubmit"
-        >
-          {{ loading ? '登录中...' : '登录' }}
-        </el-button>
-      </el-form-item>
-    </el-form>
-
-    <!-- 测试账号提示 -->
-    <el-alert
-      class="mt-6"
-      title="测试账号"
-      description="账号：admin / 密码：123456"
-      type="info"
-      :closable="false"
-    />
-  </div>
+  <!-- 登录页面 - 直接引用 LoginForm 组件 -->
+  <LoginForm />
 </template>
 
 <script setup lang="ts">
-// 登录页面
+// 登录页面 - 仅作为路由入口
+// 实际内容在 components/LoginForm.vue 中
 
-definePageMeta({
-  layout: 'guest'
+// 设置页面标题
+useHead({
+  title: '登录 - BestMSC'
 })
-const route = useRoute();
-const userStore = useUserStore()
-const router = useRouter()
-
-const formRef = ref()
-const loading = ref(false)
-
-const formData = ref({
-  account: 'admin',
-  password: 'admin'
-})
-
-const rules = {
-  account: [
-    { required: true, message: '请输入账号', trigger: 'blur' },
-    { min: 5, message: '账号长度至少 5 位', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 5, message: '密码长度至少 5 位', trigger: 'blur' }
-  ]
-}
-
-/**
- * 提交登录表单
- */
-async function handleSubmit() {
-  if (!formRef.value) return
-  
-  await formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return
-    
-    loading.value = true
-    
-    try {
-      await userStore.login(formData.value)
-      ElMessage.success('登录成功')
-      await navigateTo('/')
-    } catch (error) {
-      ElMessage.error('登录失败，请检查账号和密码')
-    } finally {
-      loading.value = false
-    }
-  })
-}
-onMounted(() => {
-  console.log('当前路由布局:', route.meta.layout); // 应该输出 'guest'
-});
 </script>
-
-<style scoped>
-.login-page {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
