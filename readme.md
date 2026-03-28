@@ -76,27 +76,58 @@ pnpm type-check
 ├── middleware/              # 路由中间件
 │   └── auth.global.ts      # 全局认证守卫
 ├── modules/                 # 业务模块
-│   └── user/components/
-│       └── UserFormDialog.vue
+│   ├── menu/               # 菜单管理模块
+│   │   └── components/
+│   │       ├── MenuTree.vue
+│   │       ├── MenuFormDialog.vue
+│   │       └── IconPicker.vue
+│   ├── role/               # 角色管理模块
+│   │   └── components/
+│   │       └── RoleFormDialog.vue
+│   ├── user/               # 用户管理模块
+│   │   └── components/
+│   │       └── UserFormDialog.vue
+│   └── tasteVideo/         # 情趣视频管理模块
+│       └── components/
+│           ├── TasteVideoList.vue
+│           ├── TasteVideoFormDialog.vue
+│           └── TasteVideoPreviewDialog.vue
 ├── pages/                   # 页面路由
-│   ├── user/
-│   │   └── index.vue       # 用户管理页面
+│   ├── user/               # 用户管理页面
+│   ├── role/               # 角色管理页面
+│   ├── menu/               # 菜单管理页面
+│   ├── video/taste/        # 情趣视频管理页面
+│   │   └── index.vue
 │   ├── index.vue           # 首页
 │   └── login.vue           # 登录页
 ├── server/                  # 服务端 API
 │   ├── api/
 │   │   ├── auth/           # 认证相关接口
-│   │   └── user/           # 用户管理接口
+│   │   ├── menu/           # 菜单管理接口
+│   │   ├── role/           # 角色管理接口
+│   │   ├── user/           # 用户管理接口
+│   │   └── video/          # 视频管理接口
+│   │       ├── performer/  # 演员字典接口
+│   │       └── taste/      # 情趣视频接口
 │   └── utils/
-│       ├── defineApiEventHandler.ts
-│       └── types.ts
+│       └── defineApiEventHandler.ts  # API 统一处理器
 ├── stores/                  # Pinia 状态管理
+│   ├── types/              # 类型定义目录
+│   │   ├── menu.d.ts
+│   │   └── tasteVideo.d.ts
 │   ├── app.store.ts
+│   ├── menu.store.ts
+│   ├── role.store.ts
 │   ├── user-manage.store.ts
-│   └── user.store.ts
-├── app.vue                  # 应用入口
-├── nuxt.config.ts           # Nuxt 配置
-├── tailwind.config.js       # Tailwind 配置
+│   ├── user.store.ts
+│   └── tasteVideo.store.ts
+├── types/                   # 全局类型定义
+│   └── api.d.ts
+├── utils/                   # 工具函数
+│   └── api.ts
+├── .env.example             # 环境变量示例
+├── .eslintrc.cjs            # ESLint 配置
+├── tailwind.config.js       # Tailwind CSS 配置
 └── package.json
 ```
 
@@ -116,6 +147,30 @@ pnpm type-check
 - **编辑用户**：数据回显、密码选择性修改
 - **删除用户**：二次确认
 - **角色管理**：三种角色类型，不同颜色标签区分，支持动态扩展
+
+#### 🎯 角色管理模块
+- **角色列表**：支持分页、查询（名称、编码、状态）
+- **新增角色**：表单验证、状态选择
+- **编辑角色**：数据回显
+- **删除角色**：二次确认
+- **角色状态**：启用/禁用两种状态
+
+#### 📋 菜单管理模块
+- **菜单树形列表**：支持多级菜单展示
+- **新增菜单**：支持顶级菜单和子菜单
+- **编辑菜单**：支持多语言配置（zh-CN、en-US）
+- **删除菜单**：二次确认
+- **批量更新**：支持拖拽排序
+- **图标选择器**：Element Plus 图标选择
+
+#### 🎬 情趣视频管理模块
+- **视频列表**：支持分页、多条件查询（车牌号、演员、评分、状态、创建时间）
+- **新增视频**：表单验证、演员选择、评分组件
+- **编辑视频**：数据回显、磁力链接复制
+- **删除视频**：二次确认
+- **预览功能**：图片预览弹窗
+- **下载功能**：磁力链接一键复制
+- **演员字典**：支持前端过滤的演员下拉框
 
 #### 🎨 UI 组件
 - **TopBar**：顶部导航栏，包含面包屑、通知、全屏切换、用户下拉菜单
@@ -168,14 +223,39 @@ export default defineNuxtConfig({
 
 所有 API 接口位于 `server/api/` 目录，遵循 RESTful 风格：
 
+#### 认证接口
+- `POST /api/auth/login` - 用户登录
+- `GET /api/auth/logout` - 用户注销
+- `GET /api/auth/me` - 获取当前用户信息
+
+#### 用户管理接口
 - `GET /api/user/all` - 获取用户列表
 - `POST /api/user/create` - 新增用户
 - `PUT /api/user/update/:id` - 编辑用户
 - `DELETE /api/user/delete/:id` - 删除用户
+
+#### 角色管理接口
 - `GET /api/role/all` - 获取所有角色
-- `POST /api/auth/login` - 用户登录
-- `POST /api/auth/logout` - 用户注销
-- `GET /api/auth/me` - 获取当前用户信息
+- `POST /api/role/create` - 新增角色
+- `PUT /api/role/update/:id` - 编辑角色
+- `DELETE /api/role/delete/:id` - 删除角色
+- `GET /api/role/check-code` - 检查角色编码
+
+#### 菜单管理接口
+- `GET /api/menu/tree` - 获取菜单树
+- `POST /api/menu` - 新增菜单
+- `PUT /api/menu/:id` - 编辑菜单
+- `DELETE /api/menu/:id` - 删除菜单
+- `POST /api/menu/batch-update` - 批量更新菜单
+- `GET /api/menu/:id` - 获取单个菜单
+
+#### 视频管理接口
+- `GET /api/video/taste` - 获取视频列表
+- `POST /api/video/taste` - 新增视频
+- `PUT /api/video/taste/:id` - 编辑视频
+- `DELETE /api/video/taste/:id` - 删除视频
+- `GET /api/video/taste/preview/:id` - 获取预览图片
+- `GET /api/video/performer/dict` - 获取演员字典
 
 ### 统一错误处理
 
@@ -235,6 +315,9 @@ const emit = defineEmits<{
 
 - **`user.store.ts`**: 当前登录用户信息、菜单、权限
 - **`user-manage.store.ts`**: 用户管理列表、分页、查询参数
+- **`role.store.ts`**: 角色管理列表、分页、查询参数
+- **`menu.store.ts`**: 菜单树、菜单 CRUD、批量更新
+- **`tasteVideo.store.ts`**: 视频管理列表、分页、查询参数
 - **`app.store.ts`**: 应用 UI 状态（侧边栏折叠、全屏等）
 
 ### 使用示例
@@ -259,6 +342,7 @@ await userStore.fetchUserInfo()
 
 - 全局登录守卫（未登录跳转到登录页）
 - 简单的角色字段标记
+- 菜单权限过滤（通过 `useMenu.ts`）
 
 后续可扩展为完整的 RBAC（基于角色的访问控制）系统。
 
@@ -279,7 +363,7 @@ interface User {
 }
 ```
 
-完整类型定义见各 store 文件和 `server/utils/types.ts`。
+完整类型定义见各 store 文件和 `stores/types/`、`types/api.d.ts`。
 
 ## 🐛 常见问题
 
@@ -299,11 +383,23 @@ pnpm type-check
 
 ### 依赖安装问题
 
+如果遇到依赖安装问题，请清理后重新安装：
+
 ```bash
-# 清理并重新安装
-rm -rf node_modules pnpm-lock.yaml
+# Windows PowerShell
+Remove-Item -Path "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "pnpm-lock.yaml" -Force -ErrorAction SilentlyContinue
 pnpm install
 ```
+
+### @oxc 原生绑定问题
+
+Nuxt 4.4.2 在 Windows 平台上需要 @oxc 相关的原生绑定，这些是必需的依赖项。
+
+如果遇到相关错误，请确保：
+1. Node.js 版本 >= 22.0.0
+2. pnpm 版本 >= 9.0.0
+3. .npmrc 配置正确
 
 ## 📄 许可证
 
@@ -312,4 +408,5 @@ MIT License
 ---
 
 **开发团队**: Best MSC Team  
-**最后更新**: 2026-03-26
+**最后更新**: 2026-03-28  
+**项目版本**: 1.0.0
