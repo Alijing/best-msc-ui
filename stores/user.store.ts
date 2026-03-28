@@ -44,13 +44,24 @@ export const useUserStore = defineStore('user', () => {
     /**
      * 获取用户信息（调用服务端 API）
      */
-    async function fetchUserInfo() {
+    async function fetchUserInfo(event?: any) {
         try {
-            const data = await clientApiFetch('/api/auth/me')
-
-            user.value = data.user
-            menus.value = data.menus
-            permissions.value = data.permissions || []
+            // 如果传入了 event（SSR 场景），使用 serverApiFetch 从 cookie 中提取 token
+            if (event && typeof window === 'undefined') {
+                // SSR 场景：直接从 event 提取 cookie 调用后端接口
+                const response = await serverApiFetch(event, '/security/user/current', {
+                    method: 'GET'
+                })
+                user.value = response.data
+                menus.value = response.data.menus
+                permissions.value = response.data.permissions || []
+            } else {
+                // 客户端场景：通过 Nuxt API 代理，自动携带 cookie
+                const response = await clientApiFetch('/api/auth/me')
+                user.value = response.data
+                menus.value = response.data.menus
+                permissions.value = response.data.permissions || []
+            }
         } catch (error) {
             console.error('❌ [fetchUserInfo] 获取用户信息失败:', error)
             throw error
@@ -68,9 +79,21 @@ export const useUserStore = defineStore('user', () => {
                 body: credentials
             })
 
-            // 手动设置登录状态（因为 HttpOnly cookie 无法被 JS 读取）
-            const isLoggedIn = useState('isLoggedIn')
-            isLoggedIn.value = true
+            // 登录成功后，在获取用户信息前先设置 isLoggedIn 为 true
+            // 否则 fetchUserInfo 会被 API 拦截器拦截
+            const isLoggedInState = useState('isLoggedIn')
+            isLoggedInState.value = true
+            
+            // 同时在 localStorage 中保存登录标记（用于页面刷新时恢复）
+            if (import.meta.client) {
+              localStorage.setItem('isLoggedIn', 'true')
+              // 保存 token 过期时间（绝对时间戳）
+              if (response.data && response.data.expireTime) {
+                // expireTime 是秒数，转换为毫秒并加上当前时间得到绝对时间戳
+                const expireTimestamp = Date.now() + response.data.expireTime * 1000
+                localStorage.setItem('tokenExpireTime', String(expireTimestamp))
+              }
+            }
 
             // 登录成功后立即获取用户信息
             await fetchUserInfo()
@@ -95,6 +118,12 @@ export const useUserStore = defineStore('user', () => {
             user.value = null
             menus.value = []
             permissions.value = []
+            
+            // 清除 localStorage 中的登录标记
+            if (import.meta.client) {
+              localStorage.removeItem('isLoggedIn')
+              localStorage.removeItem('tokenExpireTime')
+            }
             
             console.log('✅ [logout] 已重置用户状态')
         }

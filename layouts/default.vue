@@ -80,21 +80,49 @@ const { refresh: refreshUserInfo } = await useAsyncData('userInfo', async () => 
   const isLoggedIn = useState('isLoggedIn')
   const token = useCookie('auth_token')
   
-  // 如果没有登录状态但有 token，设置登录状态
-  if (!isLoggedIn.value && token.value) {
-    isLoggedIn.value = true
+  // 如果没有登录状态但有 token 或 localStorage 标记，设置登录状态
+  if (!isLoggedIn.value) {
+    // 检查 cookie 中的 token（HttpOnly 无法读取，但保留检查）
+    const hasToken = !!token.value
+    
+    // 检查 localStorage 中的登录标记
+    let hasLocalStorageFlag = false
+    if (import.meta.client) {
+      const loggedIn = localStorage.getItem('isLoggedIn')
+      const expireTime = localStorage.getItem('tokenExpireTime')
+      
+      if (loggedIn === 'true' && expireTime) {
+        const expireTimestamp = parseInt(expireTime, 10)
+        const now = Date.now()
+        hasLocalStorageFlag = now < expireTimestamp
+        
+        // 如果已过期，清除标记
+        if (!hasLocalStorageFlag) {
+          localStorage.removeItem('isLoggedIn')
+          localStorage.removeItem('tokenExpireTime')
+        }
+      }
+    }
+    
+    // 如果有有效标记，设置登录状态
+    if (hasToken || hasLocalStorageFlag) {
+      isLoggedIn.value = true
+    }
   }
   
   // 只在没有用户信息时才获取
   if (!userStore.user) {
     try {
-      await userStore.fetchUserInfo()
+      // 在 SSR 时，尝试从上下文中获取 event
+      const event = typeof window === 'undefined' ? useRequestEvent() : undefined
+      await userStore.fetchUserInfo(event)
     } catch (error) {
       console.error('获取用户信息失败:', error)
     }
   }
   
-  return userStore.user
+  // 必须返回一个值，避免 SSR 和客户端不一致
+  return userStore.user || {}
 }, {
   server: true, // SSR 模式下在服务端也执行
   lazy: false, // 阻塞式加载，确保首屏有数据

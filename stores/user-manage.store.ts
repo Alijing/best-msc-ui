@@ -51,7 +51,7 @@ export interface UserManage {
     account: string
     name: string
     phone?: string
-    role: RoleCode
+    roleName: string
     createTime: Date
 }
 
@@ -100,7 +100,7 @@ export const useUserManageStore = defineStore('userManage', () => {
         loading.value = true
         try {
             const params = {
-                page: query.value.pageIndex,
+                pageIndex: query.value.pageIndex,
                 pageSize: query.value.pageSize,
                 account: query.value.account || '',
                 name: query.value.name || '',
@@ -108,13 +108,12 @@ export const useUserManageStore = defineStore('userManage', () => {
                 role: query.value.role || ''
             }
 
-            const data = await clientApiFetch<UserListResponse>('/api/user/all', {
+            const response = await clientApiFetch<UserListResponse>('/api/user/all', {
                 method: 'GET',
                 query: params
             })
-
-            users.value = data.data
-            total.value = data.total
+            users.value = response.data
+            total.value = response.total
         } catch (error) {
             console.error('获取用户列表失败:', error)
             ElMessage.error(error.message ? error.message : '获取用户列表失败')

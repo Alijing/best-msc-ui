@@ -3,13 +3,7 @@
  */
 
 import {parseCookies} from 'h3'
-
-interface ApiResponse<T = any> {
-    code: number
-    data: T
-    message: string
-    success: boolean
-}
+import type { ApiResponse } from '~/types/api'
 
 /**
  * API 请求拦截器 - 在客户端发起请求前检查登录状态
@@ -21,30 +15,43 @@ export function interceptApiRequest(url: string, options?: any): void {
         return
     }
 
-    // 使用 useState 检查登录状态（而不是直接读 cookie）
-    const isLoggedIn = useState('isLoggedIn').value
-
     // 公开接口列表（不需要认证）
     const publicPaths = ['/api/auth/login']
     const isPublicPath = publicPaths.some(path => url.includes(path))
 
-    // 未登录且不是公开接口时，抛出错误阻止请求
-    if (!isLoggedIn && !isPublicPath) {
-        console.warn(`⚠️ 拦截未登录用户的 API 请求：${url}`)
-        throw new Error('用户未登录，已拦截请求')
+    // 如果是公开接口，直接放行
+    if (isPublicPath) {
+        return
     }
+
+    // 检查登录状态：同时检查 cookie 和 useState
+    const token = useCookie('auth_token')
+    const isLoggedInState = typeof useState !== 'undefined' ? useState('isLoggedIn').value : false
+    
+    // 如果 cookie 中存在 token 或者 state 为已登录，则放行
+    if (token.value || isLoggedInState) {
+        return
+    }
+
+    // 未登录且不是公开接口时，抛出错误阻止请求
+    console.warn(`⚠️ 拦截未登录用户的 API 请求：${url}`)
+    throw new Error('用户未登录，已拦截请求')
 }
 
 /**
  * 处理 API 响应，当 code !== 20000 时抛出错误
  */
-export async function handleApiResponse<T>(response: ApiResponse<T>): Promise<T> {
+export async function handleApiResponse<T>(response: ApiResponse<T>): Promise<ApiResponse<T>> {
     if (response.code !== 20000) {
         const errorMessage = response.message || '请求失败'
 
         // 401 特殊处理：跳转到登录页
         if (response.code === 401) {
             if (typeof window !== 'undefined') {
+                // 清除本地状态
+                localStorage.removeItem('isLoggedIn')
+                localStorage.removeItem('tokenExpireTime')
+                
                 // 使用 Nuxt 的 navigateTo 进行路由跳转（避免硬刷新）
                 await navigateTo('/login')
             }
@@ -55,14 +62,15 @@ export async function handleApiResponse<T>(response: ApiResponse<T>): Promise<T>
             message: errorMessage
         })
     }
-    return response.data
+    console.log(`✅ [clientApiFetch] 请求成功:`, response)
+    return response
 }
 
 /**
  * Nuxt 客户端（浏览器）调用 Nuxt 服务端 API 请求函数
  * 通过服务端代理自动携带 HttpOnly cookie 中的 token
  */
-export async function clientApiFetch<T>(url: string, options?: any): Promise<T> {
+export async function clientApiFetch<T>(url: string, options?: any): Promise<ApiResponse<T>> {
     // 客户端调用时进行拦截检查
     if (typeof window !== 'undefined') {
         interceptApiRequest(url, options)
@@ -87,7 +95,7 @@ export async function clientApiFetch<T>(url: string, options?: any): Promise<T> 
 /**
  * 通用 API 请求函数（可用于服务端或客户端）
  */
-export async function apiFetch<T>(url: string, options?: any): Promise<T> {
+export async function apiFetch<T>(url: string, options?: any): Promise<ApiResponse<T>> {
     // 客户端调用时进行拦截检查
     if (typeof window !== 'undefined') {
         interceptApiRequest(url, options)
@@ -140,6 +148,7 @@ export async function serverApiFetch<T>(event: any, url: string, options?: any, 
     try {
         const headers = {
             ...(options?.headers || {}),
+            // 直接传递 token（不带 Bearer 前缀）
             ...(token ? {'Authorization': `${token}`} : {})
         }
         // 直接返回完整响应，让调用方自己处理（不抛异常）

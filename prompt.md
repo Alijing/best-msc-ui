@@ -1,275 +1,247 @@
-以下是一个完整的实现方案，包含所有必要文件，并充分利用 Nuxt 3 的特性，确保未登录时无论访问任何路径都只渲染登录页（使用 `guest` 布局），且不会先渲染目标页面再跳转。
+## 📝 情趣视频模块功能描述
 
----
+```markdown
+### 功能名称
+情趣视频模块
 
-## 1. `app.vue` – 应用入口，根据认证状态决定渲染内容
-```vue
-<template>
-  <NuxtLayout :name="layoutName">
-    <!-- 未登录时显示登录表单 -->
-    <LoginForm v-if="!isLoggedIn" />
-    <!-- 登录后显示路由对应的页面 -->
-    <NuxtPage v-else />
-  </NuxtLayout>
-</template>
+### 所属模块
+整体模块，涉及以下目录：
+- `pages/video/taste/index.vue` - 情趣视频列表页面
+- `modules/tasteVideo/components/TasteVideoList.vue` - 视频列表组件（包含查询、重置、新增、编辑、删除、预览、下载按钮）
+- `modules/tasteVideo/components/TasteVideoFormDialog.vue` - 新增/编辑视频表单弹窗
+- `modules/tasteVideo/components/TasteVideoPreviewDialog.vue` - 预览图片弹窗
+- `stores/tasteVideo.store.ts` - 视频管理状态（列表、分页、查询参数、加载状态）
+- `server/api/video/taste/index.get.ts` - 获取视频列表（支持分页、查询）
+- `server/api/video/taste/index.post.ts` - 新增视频
+- `server/api/video/taste/[id].get.ts` - 获取单个视频（编辑回显）
+- `server/api/video/taste/[id].put.ts` - 编辑视频
+- `server/api/video/taste/[id].delete.ts` - 删除视频
+- `server/api/video/taste/preview/[id].get.ts` - 获取视频预览图片地址列表
 
-<script setup>
-// 全局登录状态（SSR 安全）
-const isLoggedIn = useState('isLoggedIn', () => false)
+### 类型
+功能模块（包含页面、组件、store、API路由）
 
-// 动态选择布局：未登录用 guest，登录后用 default
-const layoutName = computed(() => isLoggedIn.value ? 'default' : 'guest')
+### 详细描述
+实现情趣视频管理功能，菜单路径为 `/video/taste`。包含以下界面和操作：
 
-// 可选：从 cookie 或 token 初始化状态（见下面插件）
-onMounted(() => {
-  // 客户端额外检查（如果服务端未正确同步）
-  const token = useCookie('auth_token').value
-  if (token && !isLoggedIn.value) {
-    isLoggedIn.value = true
+**列表页**：
+- 顶部查询区：包含以下字段（使用 `el-form` 布局）：
+  - 车牌号（输入框，模糊匹配）
+  - 演员（下拉框，支持远程搜索/前端过滤，数据源来自 `/video/performer/dict`，返回 `{ id, name }` 列表）
+  - 评分（`el-rate` 评分组件，整数分值，可选范围1-5）
+  - 状态（下拉框，选项：全部、未下载(0)、已下载(1)、已观看(2)）
+  - 创建时间（日期范围选择器，`el-date-picker` 类型 `daterange`）
+- 按钮：【查询】、【重置】
+- 右上角：【新增视频】按钮
+- 表格展示视频数据，列包括：
+  - 车牌号
+  - 名称
+  - 演员
+  - 发行时间（格式化 YYYY-MM-DD）
+  - 评分（显示为星标）
+  - 状态（使用 `el-tag`：未下载-灰色，已下载-蓝色，已观看-绿色）
+  - 创建时间（格式化 YYYY-MM-DD HH:mm:ss）
+  - 操作（预览、下载、编辑、删除）
+- 表格支持分页（默认每页10条）
+
+**查询/重置**：
+- 查询：根据填写条件调用后端接口获取列表，输入框失去焦点时触发查询，下拉框值改变时触发查询
+- 重置：清空所有查询条件（包括日期范围），并重新加载列表
+
+**新增/编辑**：
+- 点击【新增视频】打开弹窗，表单包含：
+  - 车牌号（必填，文本输入框）
+  - 名称（必填，文本输入框）
+  - 演员（下拉框，数据源同查询区，支持远程搜索/前端过滤，必选）
+  - 发行时间（日期选择器，必选，格式 `YYYY-MM-DD`）
+  - 评分（`el-rate` 评分组件，必选）
+  - 状态（单选按钮或下拉，选项：未下载、已下载、已观看，默认未下载）
+  - BT链接或下载口令（文本域，必填）
+- 点击【编辑】打开弹窗，表单回显已有数据
+- 表单提交前进行前端验证（必填项，日期格式）
+- 提交成功后关闭弹窗，刷新列表
+
+**预览**：
+- 点击预览按钮，调用后端接口 `/video/taste/preview/{id}` 获取该视频的预览图片地址列表
+- 前端在 `el-dialog` 中使用 `el-image` 弹窗展示
+
+**下载**：
+- 点击下载按钮，将视频的 `magnetUri` 字段内容复制到剪贴板，并提示“磁力链接已复制”
+
+**删除**：
+- 点击删除按钮弹出二次确认框
+- 删除成功后刷新列表
+
+### 业务规则
+- 演员下拉框数据从 `/video/performer/dict` 获取，应支持前端过滤（输入关键字匹配）。
+- 评分字段为整数，范围1-5。
+- 状态字段存储为数字 0,1,2，前端展示对应文本。
+- 预览接口可能需要认证，前端需携带凭证（默认由 `$fetch` 自动携带）。
+
+### 输入
+- **查询参数**（GET /api/video/taste）：
+  ```ts
+  interface TasteVideoQuery {
+    pageIndex: number
+    pageSize: number
+    number?: string          // 车牌号模糊匹配
+    performer?: number|string       // 演员ID
+    rating?: number          // 评分
+    status?: 0 | 1 | 2
+    gmtCreate?: string[]  // 创建时间，YYYY-MM-DD HH:mm:ss
   }
-})
-</script>
-```
-
----
-
-## 2. `layouts/guest.vue` – 登录页专用布局（简洁，无侧边栏/导航）
-```vue
-<template>
-  <div class="guest-layout">
-    <slot />
-  </div>
-</template>
-
-<style scoped>
-.guest-layout {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-}
-</style>
-```
-
----
-
-## 3. `layouts/default.vue` – 默认布局（已登录用户使用）
-```vue
-<template>
-  <div class="default-layout">
-    <nav>
-      <NuxtLink to="/">首页</NuxtLink>
-      <NuxtLink to="/profile">个人中心</NuxtLink>
-      <button @click="logout">退出登录</button>
-    </nav>
-    <main>
-      <slot />
-    </main>
-  </div>
-</template>
-
-<script setup>
-const isLoggedIn = useState('isLoggedIn')
-
-const logout = () => {
-  // 清除 cookie 和状态
-  const tokenCookie = useCookie('auth_token')
-  tokenCookie.value = null
-  isLoggedIn.value = false
-  // 可选：跳转到登录页（但 app.vue 会自动显示登录表单，无需跳转）
-}
-</script>
-
-<style scoped>
-.default-layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-nav {
-  background: #333;
-  padding: 1rem;
-  display: flex;
-  gap: 1rem;
-}
-nav a, nav button {
-  color: white;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-main {
-  flex: 1;
-  padding: 2rem;
-}
-</style>
-```
-
----
-
-## 4. `components/LoginForm.vue` – 登录表单组件
-```vue
-<template>
-  <div class="login-container">
-    <form @submit.prevent="handleLogin">
-      <h2>登录</h2>
-      <input v-model="email" type="email" placeholder="邮箱" required />
-      <input v-model="password" type="password" placeholder="密码" required />
-      <button type="submit" :disabled="loading">登录</button>
-      <p v-if="error" class="error">{{ error }}</p>
-    </form>
-  </div>
-</template>
-
-<script setup>
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
-const isLoggedIn = useState('isLoggedIn')
-
-const handleLogin = async () => {
-  loading.value = true
-  error.value = ''
-
-  try {
-    // 调用登录 API（根据实际情况修改）
-    const response = await $fetch('/api/login', {
-      method: 'POST',
-      body: { email: email.value, password: password.value }
-    })
-
-    // 保存 token 到 cookie（自动同步到服务端）
-    const tokenCookie = useCookie('auth_token')
-    tokenCookie.value = response.token
-
-    // 更新全局登录状态
-    isLoggedIn.value = true
-  } catch (err) {
-    error.value = err.data?.message || '登录失败'
-  } finally {
-    loading.value = false
+  ```
+- **新增/编辑视频请求体**（POST /api/video/taste / PUT /api/video/taste/:id）：
+  ```ts
+  interface TasteVideoRequest {
+    number: string
+    name: string
+    performer: number|string
+    releaseDate: string       // YYYY-MM-DD
+    rating: number
+    status: 0 | 1 | 2
+    magnetUri: string
   }
-}
-</script>
-
-<style scoped>
-.login-container {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-input {
-  padding: 0.5rem;
-  font-size: 1rem;
-}
-button {
-  padding: 0.5rem;
-  background: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-.error {
-  color: red;
-}
-</style>
-```
-
----
-
-## 5. `plugins/auth.client.ts` – 客户端插件，从 cookie 同步登录状态
-```typescript
-export default defineNuxtPlugin(() => {
-  const isLoggedIn = useState('isLoggedIn')
-  const token = useCookie('auth_token')
-
-  // 客户端启动时，如果存在 token，设置登录状态为 true
-  if (token.value) {
-    isLoggedIn.value = true
+  ```
+- **演员字典响应**（GET /video/performer/dict）：
+  ```ts
+  interface PerformerDictItem {
+    id: number|string   // 演员ID
+    name: string   // 演员名称
   }
+  // 返回 PerformerDictItem[]
+  ```
 
-  // 可选：监听 token 变化，自动更新状态
-  watch(token, (newToken) => {
-    isLoggedIn.value = !!newToken
-  })
-})
-```
-
----
-
-## 6. `server/api/login.post.ts` – 登录 API 示例（模拟）
-```typescript
-export default defineEventHandler(async (event) => {
-  const { email, password } = await readBody(event)
-
-  // 模拟验证（实际应查数据库）
-  if (email === 'user@example.com' && password === '123456') {
-    // 生成模拟 token
-    const token = 'mock-jwt-token'
-    return { token }
+### 输出
+- **视频列表响应**（GET /api/video/taste）：
+  ```ts
+  interface TasteVideoListResponse {
+    total: number
+    list: TasteVideo[]
   }
+  interface TasteVideo {
+    id: number
+    number: string
+    name: string
+    performer: string
+    releaseDate: string
+    rating: number
+    status: 0 | 1 | 2
+    magnetUri: string
+    gmtCreate: string
+  }
+  ```
+- **单个视频响应**（GET /api/video/taste/:id）：
+  ```ts
+  interface TasteVideoDetail {
+    id: number
+    number: string
+    name: string
+    performer: string
+    releaseDate: string
+    rating: number
+    status: 0 | 1 | 2
+    magnetUri: string
+  }
+  ```
+- **预览接口**（GET /api/video/taste/preview/:id）：
+   - 返回图片URL列表。
+- **增删改响应**：成功返回 `{ success: true }`，错误时抛出标准错误。
 
-  throw createError({
-    statusCode: 401,
-    message: '邮箱或密码错误'
-  })
-})
+### 数据模型
+```ts
+// types/tasteVideo.d.ts
+interface TasteVideo {
+  id: number
+  number: string
+  name: string
+  performer: string
+  releaseDate: string
+  rating: number
+  status: 0 | 1 | 2
+  magnetUri: string
+  gmtCreate: string
+}
+
+interface TasteVideoQuery {
+  page: number
+  pageSize: number
+  number?: string
+  performer?: string
+  rating?: number
+  status?: 0 | 1 | 2
+  gmtCreateStart?: string
+  gmtCreateEnd?: string
+}
+
+interface TasteVideoRequest {
+  number: string
+  name: string
+  performer: string
+  releaseDate: string
+  rating: number
+  status: 0 | 1 | 2
+  magnetUri: string
+}
+```
+
+### 依赖
+- **Pinia store**: 新建 `stores/tasteVideo.store.ts`，管理状态：
+   - state: `list` (TasteVideo[]), `total` (number), `loading` (boolean), `query` (TasteVideoQuery)
+   - actions: `fetchList`, `createVideo`, `updateVideo`, `deleteVideo`, `setQuery`, `resetQuery`
+   - 可能需要额外 action 获取演员字典（可缓存）
+- **Element Plus 组件**:
+   - `ElTable`, `ElPagination`, `ElForm`, `ElInput`, `ElSelect`, `ElOption`, `ElRate`, `ElDatePicker`, `ElButton`, `ElDialog`, `ElMessage`, `ElMessageBox`, `ElTag`, `ElImage`, `ElUpload`（预览可用 `el-image`）等
+- **组合式函数**: 可使用 `useTasteVideoStore`，以及 `useClipboard`（复制剪贴板，可借助 `navigator.clipboard` 或 `useClipboard` 组合式函数）
+- **API 调用**:
+   - `$fetch` 用于获取列表、增删改
+   - 预览图片：需要将响应转为 blob 并创建对象URL
+- **演员字典获取**: 在组件挂载时调用 `/video/performer/dict` 并缓存到 store 或组件内 ref
+
+### 样式要求
+- 查询区域使用 `el-row`/`el-col` 布局，响应式
+- 表格操作列按钮使用图标或文字+图标，建议使用 Element Plus 图标
+- 弹窗宽度 600px，表单使用 `el-form`，label-width="120px"
+- 评分组件使用 `el-rate`，显示分数
+- 状态标签使用 `el-tag`，颜色符合状态区分
+- 预览弹窗宽度自适应，显示图片
+
+### 其他约束
+- **演员下拉框**：需支持远程搜索（当输入关键字时，调用后端过滤？但题目仅要求通过后台接口获取下拉框数据源，支持过滤。我们可一次性获取全部演员列表，前端使用 `filterable` 属性进行本地过滤。如果数据量大，可改为远程搜索，但为简化，先实现本地过滤。
+- **预览实现**：后端返回图片地址列表，并在 dialog 中显示。示例：
+  ```ts
+  const previewImageUrl = ref('')
+  const previewVisible = ref(false)
+  async function handlePreview(id: number) {
+    const res = await $fetch(`/api/video/taste/preview/${id}`, { responseType: 'blob' })
+    previewImageUrl.value = URL.createObjectURL(res)
+    previewVisible.value = true
+  }
+  ```
+  在弹窗中使用 `<img :src="previewImageUrl" />`，关闭时释放 URL。
+- **下载复制**：使用 `navigator.clipboard.writeText(magnetUri)`，成功提示。
+- **删除确认**：使用 `ElMessageBox.confirm`。
+- **服务端验证**：使用 `defineApiEventHandler` 的 `validation` 进行 Zod 校验。
+- **自动导入**：确保所有组件、store、composables 均可自动导入。
 ```
 
 ---
 
-## 7. `nuxt.config.ts` – 可选配置，确保 SSR 时 cookie 可用
-```typescript
-export default defineNuxtConfig({
-  ssr: true, // 默认开启 SSR，必须保证状态同步
-  // 如果使用全局中间件，也可以在这里配置
-})
-```
+## 🚀 使用说明
 
----
-
-## 关键说明
-
-1. **状态同步（SSR 关键）**
-    - 在服务端渲染时，`useState('isLoggedIn')` 的初始值通过 `plugins/auth.client.ts` 无法执行，因此需要在服务端根据请求的 cookie 初始化状态。
-    - 可以在 `app.vue` 的 `setup` 中增加服务端逻辑，或者使用一个 **服务端插件**（`plugins/auth.server.ts`）来从请求头中读取 token 并设置 `isLoggedIn`。
-    - 简单起见，上述方案在客户端 `onMounted` 中再次检查，但可能会在 SSR 时短暂显示未登录内容（因为服务端初始值为 `false`）。
-    - 完全避免闪烁的方案：使用 `useCookie` 在 `app.vue` 中直接初始化，因为 `useCookie` 在服务端也能获取请求中的 cookie。修改 `app.vue`：
-
-```vue
-<script setup>
-const token = useCookie('auth_token')
-const isLoggedIn = useState('isLoggedIn', () => !!token.value)
-</script>
-```
-
-这样服务端和客户端都能从 cookie 获取初始值，确保水合一致。
-
-2. **URL 保持不变**  
-   未登录时，虽然浏览器地址栏可能是任意路径，但页面只显示登录表单，且 URL 不变。登录后状态更新，`<NuxtPage>` 自动渲染对应路由的组件，用户无需刷新。
-
-3. **性能**  
-   未登录时，`<NuxtPage>` 不渲染，因此目标页面的 `asyncData`、`setup` 等都不会被触发，避免了不必要的请求。
-
-4. **公开页面扩展**  
-   如果需要某些页面（如首页）允许未登录访问，可在 `app.vue` 中增加路由判断：
-   ```vue
-   <NuxtPage v-if="isLoggedIn || publicRoutes.includes(route.path)" />
-   <LoginForm v-else />
-   ```
-   并通过 `useRoute()` 获取当前路径。
-
----
-
-这个方案完全符合 Nuxt 3 的设计模式，利用 `app.vue` 作为总控，实现了“未登录时不渲染任何受保护页面”的目标，且无需中间件重定向，避免了页面闪烁。
+1. 将上述功能描述粘贴到通义灵码对话中（确保已发送开发规范文档或通过项目规则文件建立上下文）。
+2. AI 将生成以下文件的完整代码：
+   - `pages/video/taste/index.vue`
+   - `modules/tasteVideo/components/TasteVideoList.vue`
+   - `modules/tasteVideo/components/TasteVideoFormDialog.vue`
+   - `modules/tasteVideo/components/TasteVideoPreviewDialog.vue`（可选，用于预览图片）
+   - `stores/tasteVideo.store.ts`
+   - `server/api/video/taste/index.get.ts`
+   - `server/api/video/taste/index.post.ts`
+   - `server/api/video/taste/[id].get.ts`
+   - `server/api/video/taste/[id].put.ts`
+   - `server/api/video/taste/[id].delete.ts`
+   - `server/api/video/taste/preview/[id].get.ts`
+   - `server/api/video/performer/dict.get.ts`（演员字典接口，如果后端未提供则一并生成）
+3. 将生成的文件复制到项目中对应路径。
+4. 根据实际后端调整数据库操作和演员字典数据源。

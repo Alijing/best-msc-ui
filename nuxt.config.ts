@@ -13,32 +13,25 @@ export default defineNuxtConfig({
     }
   },
 
-  ssr: true,
+  ssr: false,  // 禁用 SSR，Element Plus 需要 window 对象
   // 开发模式配置
   devtools: { enabled: false },
 
   // 模块配置
   modules: [
     '@pinia/nuxt',
-    '@element-plus/nuxt',
-
+    '@element-plus/nuxt'
   ],
 
   // Element Plus 配置
   elementPlus: {
     defaultLocale: 'zh-cn',
-    importStyle: false, // 不自动导入样式，手动全局引入（避免 Sass 编译）
-    // 手动配置 ID_INJECTION_KEY，解决 SSR 水合错误
-    idInjection: {
-      prefix: 1024,
-      current: 0
-    }
+    importStyle: 'css'
   },
 
   // CSS 配置
   css: [
-    '~/assets/css/main.css',
-    'element-plus/dist/index.css' // 直接引入编译好的 CSS（避免 Sass 编译）
+    '~/assets/css/main.css'
   ],
 
   // PostCSS 配置（Tailwind CSS）
@@ -91,9 +84,8 @@ export default defineNuxtConfig({
         'vue',
         'vue-router',
         'pinia',
-        'element-plus/es', // 使用 ES 模块版本
-        '@element-plus/nuxt',
-        '@element-plus/icons-vue'
+        'element-plus',
+        'element-plus/dist/locale/zh-cn.mjs'
       ]
     },
     // 构建性能优化

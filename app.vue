@@ -19,9 +19,21 @@
 // 根据认证状态决定渲染内容
 const route = useRoute()
 
-// 从 cookie 读取 token，初始化登录状态（SSR 安全）
-const token = useCookie('auth_token')
-const isLoggedIn = useState('isLoggedIn', () => !!token.value)
+// 从 cookie 读取 token（SSR 安全）
+// maxAge 设置为 24 小时，实际过期时间由后端返回的 expireTime 控制
+const token = useCookie('auth_token', {
+  maxAge: 60 * 60 * 24, // 24 小时（兜底时间，实际由 expireTime 控制）
+  path: '/'
+})
+
+// 使用 useState 管理登录状态（客户端登录时设置）
+const isLoggedInState = useState('isLoggedIn', () => false)
+
+// 使用 computed 动态计算登录状态，同时检查 cookie 和 state
+const isLoggedIn = computed(() => {
+  // 禁用了 SSR，优先检查 state（HttpOnly cookie 无法读取）
+  return isLoggedInState.value || !!token.value
+})
 
 // 动态选择布局：未登录用 guest，登录后根据路由决定
 const layoutName = computed(() => {
@@ -35,11 +47,6 @@ const layoutName = computed(() => {
   }
   // 其他页面使用默认 layout
   return 'default'
-})
-
-// 监听 token 变化，自动更新登录状态
-watch(token, (newToken) => {
-  isLoggedIn.value = !!newToken
 })
 </script>
 

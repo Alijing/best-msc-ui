@@ -83,11 +83,9 @@
         <el-table-column prop="account" label="账号"  />
         <el-table-column prop="name" label="姓名"  />
         <el-table-column prop="phone" label="联系电话"  />
-        <el-table-column prop="role" label="角色" >
+        <el-table-column prop="roleName" label="角色" >
           <template #default="{ row }">
-            <el-tag v-if="row.role === 'admin'" type="danger">管理员</el-tag>
-            <el-tag v-else-if="row.role === 'user'" type="primary">普通用户</el-tag>
-            <el-tag v-else-if="row.role === 'guest'" type="info">访客</el-tag>
+            <el-tag type="danger">{{ row.roleName }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" >

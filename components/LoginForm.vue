@@ -96,19 +96,20 @@ async function handleSubmit() {
     loading.value = true
 
     try {
-      const response = await userStore.login(formData.value)
+      await userStore.login(formData.value)
       ElMessage.success('登录成功')
       
       // 登录成功后跳转到原页面或首页
-      const redirectPath = typeof window !== 'undefined' 
-        ? sessionStorage.getItem('redirectAfterLogin') || '/' 
+      const redirectPath = import.meta.client 
+        ? (sessionStorage.getItem('redirectAfterLogin') || '/') 
         : '/'
       
       // 清除已使用的重定向路径
-      if (typeof window !== 'undefined') {
+      if (import.meta.client) {
         sessionStorage.removeItem('redirectAfterLogin')
       }
       
+      // 使用 navigateTo 进行跳转（符合开发规范）
       await navigateTo(redirectPath)
     } catch (error) {
       ElMessage.error('登录失败，请检查账号和密码')
