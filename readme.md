@@ -1,412 +1,101 @@
-# Best MSC UI
+# Best MSC UI - 现代化管理后台
 
-一个基于 **Nuxt 3** + **Vue 3** + **TypeScript** + **Element Plus** 的现代化管理后台系统。
+基于 Nuxt 4 + Vue 3 + TypeScript + Pinia + Nuxt UI 的现代化管理后台系统。
 
-## 🚀 技术栈
+## 📋 项目概览
 
-- **框架**: [Nuxt 3](https://nuxt.com/) - Vue 全栈框架
-- **UI 库**: [Element Plus](https://element-plus.org/) - Vue 3 组件库
-- **状态管理**: [Pinia](https://pinia.vuejs.org/) - Vue 官方状态管理
-- **样式**: [Tailwind CSS](https://tailwindcss.com/) - 原子化 CSS
-- **类型安全**: [TypeScript](https://www.typescriptlang.org/) + [Zod](https://zod.dev/) - 运行时验证
-- **数据查询**: [@tanstack/vue-query](https://tanstack.com/query) - 强大的数据同步与缓存
-- **包管理器**: [pnpm](https://pnpm.io/)
+Best MSC UI 是一个功能完善的管理后台系统，支持 SSR（服务端渲染），采用前后端一体化架构设计。主要功能包括用户认证、演员字典管理、兴趣视频管理等模块。
 
-## 📦 快速开始
+**核心特性**：
+- ✅ 完整的认证体系（HttpOnly Cookie + 全局守卫）
+- ✅ 演员字典管理（CRUD + 批量操作）
+- ✅ 兴趣视频管理（多条件查询 + 预览 + 下载）
+- ✅ 响应式设计 + 暗色模式支持
+- ✅ TypeScript 类型安全
+- ✅ 自动导入机制（组件、Store、Composables）
+
+## 技术栈
+
+| 类别 | 技术 | 版本 |
+|------|------|------|
+| **元框架** | Nuxt | 4.4.2 |
+| **前端框架** | Vue | 3.5.0 |
+| **UI 组件库** | Nuxt UI | 4.6.0 |
+| **图标库** | @nuxt/icon | Heroicons + Lucide |
+| **状态管理** | Pinia | 3.0.4 |
+| **样式方案** | Tailwind CSS | 内置于 Nuxt UI |
+| **类型系统** | TypeScript | 5.3.3 |
+| **运行时验证** | Zod | 3.22.4 |
+| **数据查询** | @tanstack/vue-query | 5.17.9 |
+| **包管理器** | pnpm | 9.11.0 |
+
+## 快速开始
 
 ### 环境要求
 
-- Node.js >= 22.x（推荐 v22.22.2）
-- pnpm >= 9.x（推荐 v9.11.0）
+- Node.js >= 22.x (推荐 v22.22.2)
+- pnpm >= 9.x (推荐 v9.11.0)
 
-### 安装依赖
+**.npmrc 配置**：
+```ini
+shamefully-hoist=true
+node-linker=hoisted
+```
+
+### 1. 安装依赖
 
 ```bash
 pnpm install
 ```
 
-### 开发模式
+### 2. 配置环境变量
+
+```bash
+cp .env.example .env
+# 编辑 .env 文件，设置后端 API 地址
+# NUXT_PUBLIC_BACKEND_URL=http://localhost:8080
+```
+
+### 3. 启动开发服务器
 
 ```bash
 pnpm dev
 ```
 
-启动后访问：http://localhost:3000
+访问 http://localhost:3000
 
-### 构建生产版本
+### 4. 构建生产版本
 
 ```bash
 pnpm build
 ```
 
-### 预览生产构建
+### 5. 预览生产构建
 
 ```bash
 pnpm preview
 ```
 
-### 代码检查
+### 代码检查与类型验证
 
 ```bash
-# ESLint 检查
-pnpm lint
-
-# ESLint 自动修复
-pnpm lint:fix
-
-# TypeScript 类型检查
-pnpm type-check
+pnpm lint        # ESLint 检查
+pnpm lint:fix    # ESLint 自动修复
+pnpm type-check  # TypeScript 类型检查
 ```
 
-## 📁 项目结构
+## 项目结构
 
-```
-.
-├── assets/css/              # 全局样式
-│   └── main.css
-├── components/              # 全局共享组件
-│   ├── NotificationDropdown.vue
-│   ├── TopBar.vue
-│   └── UserDropdown.vue
-├── composables/             # 组合式函数
-│   └── useMenu.ts
-├── layouts/                 # 布局组件
-│   ├── default.vue         # 默认布局（含菜单）
-│   └── guest.vue           # 访客布局（无菜单）
-├── middleware/              # 路由中间件
-│   └── auth.global.ts      # 全局认证守卫
-├── modules/                 # 业务模块
-│   ├── menu/               # 菜单管理模块
-│   │   └── components/
-│   │       ├── MenuTree.vue
-│   │       ├── MenuFormDialog.vue
-│   │       └── IconPicker.vue
-│   ├── role/               # 角色管理模块
-│   │   └── components/
-│   │       └── RoleFormDialog.vue
-│   ├── user/               # 用户管理模块
-│   │   └── components/
-│   │       └── UserFormDialog.vue
-│   └── tasteVideo/         # 情趣视频管理模块
-│       └── components/
-│           ├── TasteVideoList.vue
-│           ├── TasteVideoFormDialog.vue
-│           └── TasteVideoPreviewDialog.vue
-├── pages/                   # 页面路由
-│   ├── user/               # 用户管理页面
-│   ├── role/               # 角色管理页面
-│   ├── menu/               # 菜单管理页面
-│   ├── video/taste/        # 情趣视频管理页面
-│   │   └── index.vue
-│   ├── index.vue           # 首页
-│   └── login.vue           # 登录页
-├── server/                  # 服务端 API
-│   ├── api/
-│   │   ├── auth/           # 认证相关接口
-│   │   ├── menu/           # 菜单管理接口
-│   │   ├── role/           # 角色管理接口
-│   │   ├── user/           # 用户管理接口
-│   │   └── video/          # 视频管理接口
-│   │       ├── performer/  # 演员字典接口
-│   │       └── taste/      # 情趣视频接口
-│   └── utils/
-│       └── defineApiEventHandler.ts  # API 统一处理器
-├── stores/                  # Pinia 状态管理
-│   ├── types/              # 类型定义目录
-│   │   ├── menu.d.ts
-│   │   └── tasteVideo.d.ts
-│   ├── app.store.ts
-│   ├── menu.store.ts
-│   ├── role.store.ts
-│   ├── user-manage.store.ts
-│   ├── user.store.ts
-│   └── tasteVideo.store.ts
-├── types/                   # 全局类型定义
-│   └── api.d.ts
-├── utils/                   # 工具函数
-│   └── api.ts
-├── .env.example             # 环境变量示例
-├── .eslintrc.cjs            # ESLint 配置
-├── tailwind.config.js       # Tailwind CSS 配置
-└── package.json
-```
+详见 [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md) - 完整的项目梳理报告
 
-## ✨ 功能特性
+## 开发文档
 
-### 已实现功能
+- [项目概览](./PROJECT_OVERVIEW.md) - 项目架构、功能模块、技术规范
+- [开发规范文档](./开发规范文档.md) - 详细的开发规范和 AI 提示词
+- [AUTH_SCHEME.md](./AUTH_SCHEME.md) - 全局鉴权与 Token 存储方案
+- [ENVIRONMENT.md](./ENVIRONMENT.md) - 环境配置说明
+- [REQUIREMENTS.md](./REQUIREMENTS.md) - 需求规格说明书
 
-#### 🔐 认证模块
-- 用户登录/注销
-- 全局认证守卫
-- 用户信息获取与持久化
-- 访客布局与默认布局切换
+## 许可证
 
-#### 👥 用户管理模块
-- **用户列表**：支持分页、模糊查询（账号、姓名、电话、角色）
-- **新增用户**：表单验证、角色选择（从后台动态加载）
-- **编辑用户**：数据回显、密码选择性修改
-- **删除用户**：二次确认
-- **角色管理**：三种角色类型，不同颜色标签区分，支持动态扩展
-
-#### 🎯 角色管理模块
-- **角色列表**：支持分页、查询（名称、编码、状态）
-- **新增角色**：表单验证、状态选择
-- **编辑角色**：数据回显
-- **删除角色**：二次确认
-- **角色状态**：启用/禁用两种状态
-
-#### 📋 菜单管理模块
-- **菜单树形列表**：支持多级菜单展示
-- **新增菜单**：支持顶级菜单和子菜单
-- **编辑菜单**：支持多语言配置（zh-CN、en-US）
-- **删除菜单**：二次确认
-- **批量更新**：支持拖拽排序
-- **图标选择器**：Element Plus 图标选择
-
-#### 🎬 情趣视频管理模块
-- **视频列表**：支持分页、多条件查询（车牌号、演员、评分、状态、创建时间）
-- **新增视频**：表单验证、演员选择、评分组件
-- **编辑视频**：数据回显、磁力链接复制
-- **删除视频**：二次确认
-- **预览功能**：图片预览弹窗
-- **下载功能**：磁力链接一键复制
-- **演员字典**：支持前端过滤的演员下拉框
-
-#### 🎨 UI 组件
-- **TopBar**：顶部导航栏，包含面包屑、通知、全屏切换、用户下拉菜单
-- **UserDropdown**：用户信息与操作下拉菜单
-- **NotificationDropdown**：通知中心下拉列表
-- **UserFormDialog**：用户表单弹窗（新增/编辑）
-
-#### 🛡️ 类型安全
-- 全面使用 TypeScript
-- Zod 运行时验证（服务端 API）
-- 前后端共享类型定义
-
-## 🔧 配置说明
-
-### Nuxt 配置 (`nuxt.config.ts`)
-
-```typescript
-export default defineNuxtConfig({
-  devtools: { enabled: true },
-  modules: [
-    '@pinia/nuxt',
-    '@element-plus/nuxt',
-    '@nuxt/devtools'
-  ],
-  elementPlus: {
-    defaultLocale: 'zh-cn',
-    importStyle: 'css'
-  },
-  css: ['~/assets/css/main.css'],
-  imports: {
-    dirs: ['stores', 'composables/**', 'utils/**']
-  }
-})
-```
-
-### 自动导入规则
-
-以下目录的内容会自动导入，无需手动 `import`：
-
-- `components/` - 所有组件
-- `composables/` - 所有组合式函数（以 `use` 开头）
-- `stores/` - 所有 Pinia store
-- `utils/` - 工具函数
-
-**注意**：`modules/` 目录下的组件需要手动导入。
-
-## 📝 API 接口规范
-
-### 服务端 API 位置
-
-所有 API 接口位于 `server/api/` 目录，遵循 RESTful 风格：
-
-#### 认证接口
-- `POST /api/auth/login` - 用户登录
-- `GET /api/auth/logout` - 用户注销
-- `GET /api/auth/me` - 获取当前用户信息
-
-#### 用户管理接口
-- `GET /api/user/all` - 获取用户列表
-- `POST /api/user/create` - 新增用户
-- `PUT /api/user/update/:id` - 编辑用户
-- `DELETE /api/user/delete/:id` - 删除用户
-
-#### 角色管理接口
-- `GET /api/role/all` - 获取所有角色
-- `POST /api/role/create` - 新增角色
-- `PUT /api/role/update/:id` - 编辑角色
-- `DELETE /api/role/delete/:id` - 删除角色
-- `GET /api/role/check-code` - 检查角色编码
-
-#### 菜单管理接口
-- `GET /api/menu/tree` - 获取菜单树
-- `POST /api/menu` - 新增菜单
-- `PUT /api/menu/:id` - 编辑菜单
-- `DELETE /api/menu/:id` - 删除菜单
-- `POST /api/menu/batch-update` - 批量更新菜单
-- `GET /api/menu/:id` - 获取单个菜单
-
-#### 视频管理接口
-- `GET /api/video/taste` - 获取视频列表
-- `POST /api/video/taste` - 新增视频
-- `PUT /api/video/taste/:id` - 编辑视频
-- `DELETE /api/video/taste/:id` - 删除视频
-- `GET /api/video/taste/preview/:id` - 获取预览图片
-- `GET /api/video/performer/dict` - 获取演员字典
-
-### 统一错误处理
-
-使用 `defineApiEventHandler` 封装，支持：
-
-- Zod 参数验证（失败返回 422）
-- 统一错误响应格式
-- 权限守卫（可扩展）
-
-## 🎯 开发规范
-
-### 命名约定
-
-- **组件**: `PascalCase` (如 `UserFormDialog.vue`)
-- **组合式函数**: `use` 开头 + `camelCase` (如 `useMenu.ts`)
-- **Store**: `use` 开头 + `Store` 结尾 (如 `useUserManageStore`)
-- **目录**: `kebab-case` (如 `user-profile/`)
-- **类型/接口**: `PascalCase` (如 `User`, `CreateUserRequest`)
-
-### 组件结构顺序
-
-```vue
-<script setup lang="ts">
-  // 1. 类型导入
-  // 2. props 和 emits
-  // 3. 组合式函数调用
-  // 4. 响应式数据
-  // 5. 计算属性
-  // 6. 方法/事件
-  // 7. 生命周期
-</script>
-
-<template>
-  <!-- 模板内容 -->
-</template>
-
-<style scoped>
-  <!-- 样式 -->
-</style>
-```
-
-### Props & Emits 定义
-
-```typescript
-const props = withDefaults(defineProps<{ title?: string }>(), {
-  title: '默认标题'
-})
-
-const emit = defineEmits<{
-  (e: 'update', id: number): void
-}>()
-```
-
-## 📚 状态管理
-
-### Store 模块
-
-- **`user.store.ts`**: 当前登录用户信息、菜单、权限
-- **`user-manage.store.ts`**: 用户管理列表、分页、查询参数
-- **`role.store.ts`**: 角色管理列表、分页、查询参数
-- **`menu.store.ts`**: 菜单树、菜单 CRUD、批量更新
-- **`tasteVideo.store.ts`**: 视频管理列表、分页、查询参数
-- **`app.store.ts`**: 应用 UI 状态（侧边栏折叠、全屏等）
-
-### 使用示例
-
-```typescript
-const userStore = useUserStore()
-const { user, menus } = storeToRefs(userStore)
-await userStore.fetchUserInfo()
-```
-
-## 🎨 样式方案
-
-- **Tailwind CSS**: 用于布局、间距、尺寸等原子类
-- **Element Plus**: 组件样式（默认主题）
-- **自定义样式**: `assets/css/main.css`
-
-避免重复造轮子，优先使用 Tailwind 和 Element Plus 的内置样式。
-
-## 🔒 权限控制
-
-当前版本权限控制较为基础，仅实现：
-
-- 全局登录守卫（未登录跳转到登录页）
-- 简单的角色字段标记
-- 菜单权限过滤（通过 `useMenu.ts`）
-
-后续可扩展为完整的 RBAC（基于角色的访问控制）系统。
-
-## 📊 数据模型
-
-### 用户类型定义
-
-```typescript
-type RoleType = 'admin' | 'user' | 'guest'
-
-interface User {
-  id: number
-  account: string
-  name: string
-  phone?: string
-  role: RoleType
-  createTime: Date
-}
-```
-
-完整类型定义见各 store 文件和 `stores/types/`、`types/api.d.ts`。
-
-## 🐛 常见问题
-
-### 端口被占用
-
-```bash
-# 修改端口
-pnpm dev --port 3001
-```
-
-### 类型检查错误
-
-```bash
-# 运行类型检查
-pnpm type-check
-```
-
-### 依赖安装问题
-
-如果遇到依赖安装问题，请清理后重新安装：
-
-```bash
-# Windows PowerShell
-Remove-Item -Path "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "pnpm-lock.yaml" -Force -ErrorAction SilentlyContinue
-pnpm install
-```
-
-### @oxc 原生绑定问题
-
-Nuxt 4.4.2 在 Windows 平台上需要 @oxc 相关的原生绑定，这些是必需的依赖项。
-
-如果遇到相关错误，请确保：
-1. Node.js 版本 >= 22.0.0
-2. pnpm 版本 >= 9.0.0
-3. .npmrc 配置正确
-
-## 📄 许可证
-
-MIT License
-
----
-
-**开发团队**: Best MSC Team  
-**最后更新**: 2026-03-28  
-**项目版本**: 1.0.0
+MIT

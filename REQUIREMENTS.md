@@ -1,9 +1,9 @@
 # Best MSC UI 项目需求规格说明书
 
-> **文档版本**: 1.0.0  
-> **最后更新**: 2026-03-28  
+> **文档版本**: 2.0.0  
+> **最后更新**: 2026-04-14  
 > **项目名称**: Best MSC UI - 现代化管理后台系统  
-> **技术栈**: Nuxt 3 + Vue 3 + TypeScript + Pinia + Element Plus
+> **技术栈**: Nuxt 4 + Vue 3 + TypeScript + Pinia + Nuxt UI
 
 ---
 
@@ -65,12 +65,12 @@ interface LoginResponse {
 - useUserStore (login, fetchUserInfo 方法)
 - useRouter / navigateTo
 - useCookie (存储 auth_token)
-- localStorage (持久化登录状态)
+- useState('isLoggedIn') (运行时状态)
 
 ### 样式要求
 - 居中布局
 - 表单宽度 400px
-- 使用 Element Plus 表单组件
+- 使用 Nuxt UI 表单组件 (UInput, UButton, UCard)
 - 响应式设计
 
 ### 其他约束
@@ -113,15 +113,15 @@ components/UserDropdown.vue, stores/user.store.ts, server/api/auth/logout.get.ts
 
 ### 依赖
 - useUserStore (logout 方法)
-- ElMessage (成功提示)
+- useToast (成功提示)
 - navigateTo (路由跳转)
 
 ### 样式要求
-下拉菜单项，使用 Element Plus 图标
+下拉菜单项，使用 Nuxt UI 图标 (UIcon)
 
 ### 其他约束
 - 无论后端是否成功，前端都必须清除状态
-- 清除范围：user store、cookie、localStorage
+- 清除范围：user store、cookie、useState
 ```
 
 **优先级**: P0 ✅  
@@ -210,8 +210,8 @@ middleware/auth.global.ts, plugins/auth.client.ts
 
 ### 依赖
 - useCookie (检查 auth_token)
-- localStorage (检查登录标记和过期时间)
-- sessionStorage (保存 redirectAfterLogin)
+- useState('isLoggedIn') (客户端状态检查)
+- useState('redirectPath') (保存重定向路径)
 - navigateTo (重定向)
 
 ### 样式要求
@@ -219,7 +219,7 @@ middleware/auth.global.ts, plugins/auth.client.ts
 
 ### 其他约束
 - 公开接口白名单（如 /api/auth/login）
-- Token 过期检查（比较 localStorage 中的时间戳）
+- Token 过期由 401 响应处理器处理
 - 仅客户端执行中间件逻辑
 - 不影响服务端渲染
 ```
@@ -229,7 +229,9 @@ middleware/auth.global.ts, plugins/auth.client.ts
 
 ---
 
-## 二、用户管理模块
+## 二、用户管理模块 🟡
+
+> **模块状态**: 待实现（规划中，以下需求以演员字典模块为模板编写，后续实现时参考）
 
 ### 2.1 用户列表查询
 
@@ -281,15 +283,15 @@ interface UserQuery {
 }
 
 ### 依赖
-- useUserManageStore (fetchUsers 方法)
-- ElTable, ElPagination
+- usePerformerStore (fetchList 方法)
+- UTable, UPagination
 - clientApiFetch
 
 ### 样式要求
-- 查询区域：el-form 行内布局
+- 查询区域：Nuxt UI 表单组件
 - 表格：固定表头，斑马纹
-- 角色标签：不同颜色区分（admin-红色，user-蓝色，guest-灰色）
 - 响应式布局
+- 暗色模式支持
 
 ### 其他约束
 - 输入框失去焦点时触发查询
@@ -334,14 +336,14 @@ interface CreateUserRequest {
 同输入
 
 ### 依赖
-- useUserManageStore (createUser 方法)
-- ElForm, ElInput, ElSelect, ElOption
-- ElDialog (弹窗容器)
-- ElMessage (反馈提示)
+- usePerformerStore (createPerformer 方法)
+- UForm, UInput, USelect
+- UModal (弹窗容器)
+- useToast (反馈提示)
 
 ### 样式要求
 - 弹窗宽度 600px
-- 表单 label-width="100px"
+- 表单 label 左对齐
 - 表单项垂直排列
 - 底部按钮右对齐
 
@@ -389,9 +391,9 @@ interface UpdateUserRequest {
 同输入
 
 ### 依赖
-- useUserManageStore (updateUser, getUserById 方法)
-- ElForm, ElInput, ElSelect
-- ElDialog
+- usePerformerStore (updatePerformer, fetchPerformerById 方法)
+- UForm, UInput, USelect
+- UModal
 
 ### 样式要求
 同新增用户
@@ -434,9 +436,9 @@ pages/user/index.vue, stores/user-manage.store.ts, server/api/user/delete/:id.de
 无
 
 ### 依赖
-- useUserManageStore (deleteUser 方法)
-- ElMessageBox.confirm (确认对话框)
-- ElMessage (结果反馈)
+- usePerformerStore (deletePerformer 方法)
+- ConfirmDialog (确认对话框组件)
+- useToast (结果反馈)
 
 ### 样式要求
 操作列按钮：红色危险按钮
@@ -447,12 +449,14 @@ pages/user/index.vue, stores/user-manage.store.ts, server/api/user/delete/:id.de
 - 删除失败时显示具体原因
 ```
 
-**优先级**: P0 ✅  
-**状态**: 已实现
+**优先级**: P0 🟡  
+**状态**: 待实现（规划中，以演员字典模块为模板）
 
 ---
 
-## 三、角色管理模块
+## 三、角色管理模块 🟡
+
+> **模块状态**: 待实现（规划中，以下需求以演员字典模块为模板编写，后续实现时参考）
 
 ### 3.1 角色列表查询
 
@@ -502,12 +506,12 @@ interface RoleQuery {
 }
 
 ### 依赖
-- useRoleStore (fetchRoles 方法)
-- ElTable, ElPagination, ElTag
+- usePerformerStore (fetchList 方法)
+- UTable, UPagination, UBadge
 - clientApiFetch
 
 ### 样式要求
-- 查询区域：el-form 行内布局
+- 查询区域：Nuxt UI 表单组件
 - 状态标签：启用 -绿色，禁用 -红色
 - 表格固定表头
 
@@ -552,13 +556,13 @@ interface CreateRoleRequest {
 同输入
 
 ### 依赖
-- useRoleStore (createRole 方法)
-- ElForm, ElInput, ElRadio, ElInput (textarea)
-- ElDialog
+- usePerformerStore (createPerformer 方法)
+- UForm, UInput, URadioGroup, UTextarea
+- UModal
 
 ### 样式要求
 - 弹窗宽度 600px
-- 表单 label-width="100px"
+- 表单 label 左对齐
 - 状态使用单选按钮
 
 ### 其他约束
@@ -603,9 +607,9 @@ interface UpdateRoleRequest {
 同输入
 
 ### 依赖
-- useRoleStore (updateRole, getRoleById 方法)
-- ElForm, ElInput
-- ElDialog
+- usePerformerStore (updatePerformer, fetchPerformerById 方法)
+- UForm, UInput
+- UModal
 
 ### 样式要求
 同新增角色
@@ -647,9 +651,9 @@ pages/role/index.vue, stores/role.store.ts, server/api/role/delete/:id.delete.ts
 无
 
 ### 依赖
-- useRoleStore (deleteRole 方法)
-- ElMessageBox.confirm
-- ElMessage
+- usePerformerStore (deletePerformer 方法)
+- ConfirmDialog
+- useToast
 
 ### 样式要求
 操作列按钮：红色危险按钮
@@ -694,7 +698,7 @@ interface CheckCodeResponse {
 
 ### 依赖
 - apiFetch
-- ElForm (表单验证规则)
+- UForm (表单验证规则)
 
 ### 样式要求
 - 校验通过：绿色对勾
@@ -711,7 +715,9 @@ interface CheckCodeResponse {
 
 ---
 
-## 四、菜单管理模块
+## 四、菜单管理模块 🟡
+
+> **模块状态**: 待实现（规划中，以下需求以演员字典模块为模板编写，后续实现时参考）
 
 ### 4.1 菜单树形展示
 
@@ -750,8 +756,8 @@ interface MenuNode {
 同上
 
 ### 依赖
-- useMenuStore (fetchMenuTree 方法)
-- ElTree (树形组件)
+- usePerformerStore (fetchList 方法)
+- UTree 或自定义树形组件
 - $fetch / clientApiFetch
 
 ### 样式要求
@@ -806,9 +812,9 @@ interface CreateMenuRequest {
 同输入
 
 ### 依赖
-- useMenuStore (createMenu 方法)
-- ElForm, ElInput, IconPicker
-- ElDialog
+- usePerformerStore (createPerformer 方法)
+- UForm, UInput, IconPicker
+- UModal
 
 ### 样式要求
 - 弹窗宽度 700px
@@ -901,9 +907,9 @@ interface UpdateMenuRequest {
 同输入
 
 ### 依赖
-- useMenuStore (updateMenu, getMenuById 方法)
-- ElForm, ElInput
-- ElDialog
+- usePerformerStore (updatePerformer, fetchPerformerById 方法)
+- UForm, UInput
+- UModal
 
 ### 样式要求
 同新增菜单
@@ -945,9 +951,9 @@ pages/menu/index.vue, stores/menu.store.ts, server/api/menu/:id.delete.ts
 无
 
 ### 依赖
-- useMenuStore (deleteMenu 方法)
-- ElMessageBox.confirm
-- ElMessage
+- usePerformerStore (deletePerformer 方法)
+- ConfirmDialog
+- useToast
 
 ### 样式要求
 操作按钮：红色危险按钮
@@ -992,8 +998,8 @@ interface BatchUpdateItem {
 同上
 
 ### 依赖
-- useMenuStore (batchUpdateMenu 方法)
-- ElTree (drag-drop 功能)
+- usePerformerStore (fetchList 方法)
+- UTree (拖拽功能)
 
 ### 样式要求
 - 拖拽时有视觉反馈
@@ -1023,7 +1029,7 @@ modules/menu/components/IconPicker.vue
 组件
 
 ### 详细描述
-提供 Element Plus 图标库的选择器，支持搜索、预览、选择。
+提供 Heroicons 或 Lucide 图标库的选择器，支持搜索、预览、选择。
 
 ### 输入
 - modelValue: string (选中的图标名)
@@ -1035,9 +1041,9 @@ modules/menu/components/IconPicker.vue
 无
 
 ### 依赖
-- @element-plus/icons-vue (全部图标)
-- ElInput (只读，带前缀图标)
-- ElPopover 或 ElDialog (选择面板)
+- @iconify-json/heroicons, @iconify-json/lucide (图标集)
+- UInput (只读，带前缀图标)
+- UPopover 或 UModal (选择面板)
 
 ### 样式要求
 - 图标网格展示（每行 8 个）
@@ -1056,7 +1062,7 @@ modules/menu/components/IconPicker.vue
 
 ---
 
-## 五、情趣视频管理模块
+## 五、兴趣视频管理模块
 
 ### 5.1 视频列表查询
 
@@ -1065,7 +1071,7 @@ modules/menu/components/IconPicker.vue
 视频列表查询
 
 ### 所属模块
-pages/video/taste/index.vue, modules/tasteVideo/components/TasteVideoList.vue, stores/tasteVideo.store.ts, server/api/video/taste.index.get.ts
+pages/video/taste/index.vue, modules/tasteVideo/components/TasteVideoList.vue, stores/tasteVideo.store.ts, server/api/video/index.get.ts
 
 ### 类型
 页面 + 组件 + Store + API 路由
@@ -1114,8 +1120,9 @@ interface TasteVideoQuery {
 
 ### 依赖
 - useTasteVideoStore (fetchList 方法)
-- ElTable, ElPagination
-- ElForm, ElInput, ElSelect, ElRate, ElDatePicker
+- UTable, UPagination
+- UForm, UInput, USelect, UDatePicker
+- 自定义评分组件（UIcon + Heroicons 星星图标）
 - clientApiFetch
 
 ### 样式要求
@@ -1143,7 +1150,7 @@ interface TasteVideoQuery {
 新增视频
 
 ### 所属模块
-modules/tasteVideo/components/TasteVideoFormDialog.vue, stores/tasteVideo.store.ts, server/api/video/taste.index.post.ts
+modules/tasteVideo/components/TasteVideoFormDialog.vue, stores/tasteVideo.store.ts, server/api/video/index.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -1171,14 +1178,15 @@ interface TasteVideoRequest {
 
 ### 依赖
 - useTasteVideoStore (createVideo 方法)
-- ElForm, ElInput, ElSelect, ElRate, ElDatePicker
-- ElDialog
+- UForm, UInput, USelect, UDatePicker
+- 自定义评分组件（UIcon + Heroicons 星星图标）
+- UModal
 - 演员字典接口 (/video/performer/dict)
 
 ### 样式要求
 - 弹窗宽度 700px
-- 表单 label-width="120px"
-- 评分使用 el-rate 组件
+- 表单 label 左对齐
+- 评分使用自定义组件（UIcon + Heroicons 星星图标）
 - 磁力链接使用文本域
 
 ### 其他约束
@@ -1220,8 +1228,8 @@ modules/tasteVideo/components/TasteVideoFormDialog.vue, stores/tasteVideo.store.
 
 ### 依赖
 - useTasteVideoStore (updateVideo, getVideo 方法)
-- ElForm, ElInput
-- ElDialog
+- UForm, UInput
+- UModal
 
 ### 样式要求
 同新增视频
@@ -1264,8 +1272,8 @@ modules/tasteVideo/components/TasteVideoList.vue, stores/tasteVideo.store.ts, se
 
 ### 依赖
 - useTasteVideoStore (deleteVideo 方法)
-- ElMessageBox.confirm
-- ElMessage
+- ConfirmDialog
+- useToast
 
 ### 样式要求
 操作列按钮：红色危险按钮
@@ -1306,7 +1314,7 @@ modules/tasteVideo/components/TasteVideoList.vue, TasteVideoPreviewDialog.vue, s
 
 ### 依赖
 - clientApiFetch
-- ElDialog, ElImage
+- UModal, UImage
 - URL.createObjectURL (如果是 blob)
 
 ### 样式要求
@@ -1353,7 +1361,7 @@ modules/tasteVideo/components/TasteVideoList.vue
 
 ### 依赖
 - navigator.clipboard.writeText
-- ElMessage
+- useToast
 
 ### 样式要求
 操作列按钮：蓝色按钮，下载图标
@@ -1443,7 +1451,7 @@ components/TopBar.vue
 ### 依赖
 - useAppStore (侧边栏、全屏状态)
 - UserDropdown, NotificationDropdown
-- ElBreadcrumb, ElIcon
+- UBreadcrumb, UIcon
 
 ### 样式要求
 - 固定顶部
@@ -1488,7 +1496,7 @@ components/UserDropdown.vue
 
 ### 依赖
 - useUserStore
-- ElDropdown, ElAvatar
+- UDropdown, UAvatar
 - useRouter
 
 ### 样式要求
@@ -1539,7 +1547,7 @@ interface Notification {
 }
 
 ### 依赖
-- ElDropdown, ElBadge, ElTabs
+- UDropdown, UBadge, UTabs
 - apiFetch (获取通知列表)
 
 ### 样式要求
@@ -1588,8 +1596,8 @@ interface LoginForm {
 
 ### 依赖
 - useUserStore (login 方法)
-- ElForm, ElInput, ElButton
-- ElAlert (错误提示)
+- UForm, UInput, UButton
+- UAlert (错误提示)
 
 ### 样式要求
 - 表单垂直排列
@@ -1809,6 +1817,7 @@ interface Permission {
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|---------|------|
 | 1.0.0 | 2026-03-28 | 初始版本，包含所有已实现功能的需求规格说明 | AI Assistant |
+| 2.0.0 | 2026-04-14 | 迁移至 Nuxt UI，所有 Element Plus 组件替换为 Nuxt UI 等效组件；保留所有规划模块（用户管理、角色管理、菜单管理）作为后续实现参考，以演员字典模块为模板更新技术栈和依赖 | AI Assistant |
 
 ---
 

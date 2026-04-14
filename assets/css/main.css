@@ -1,0 +1,88 @@
+/* 全局样式 */
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* 确保全屏布局正常显示 */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #f9fafb;
+}
+
+@media (prefers-color-scheme: dark) {
+    html, body {
+        background-color: #111827;
+    }
+}
+
+/* 自定义滚动条样式（可选） */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 208px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* 页面过渡动画 */
+.page-enter-active,
+.page-leave-active {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-enter-from,
+.page-leave-to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+}
+
+/* 布局过渡动画 */
+.layout-enter-active,
+.layout-leave-active {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-enter-from,
+.layout-leave-to {
+    opacity: 0;
+}
+
+/* 登录页错误提示动画 */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
