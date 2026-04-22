@@ -240,7 +240,7 @@ middleware/auth.global.ts, plugins/auth.client.ts
 用户列表查询
 
 ### 所属模块
-pages/user/index.vue, stores/user-manage.store.ts, server/api/user/all.get.ts
+pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user/index.get.ts
 
 ### 类型
 页面 + Store + API 路由
@@ -311,7 +311,7 @@ interface UserQuery {
 新增用户
 
 ### 所属模块
-modules/user/components/UserFormDialog.vue, stores/user-manage.store.ts, server/api/user/create.post.ts
+modules/system/user/components/UserFormDialog.vue, stores/user-manage.store.ts, server/api/system/user/create.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -366,7 +366,7 @@ interface CreateUserRequest {
 编辑用户
 
 ### 所属模块
-modules/user/components/UserFormDialog.vue, stores/user-manage.store.ts, server/api/user/update/:id.put.ts
+modules/system/user/components/UserFormDialog.vue, stores/user-manage.store.ts, server/api/system/user/update/:id.put.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -417,7 +417,7 @@ interface UpdateUserRequest {
 删除用户
 
 ### 所属模块
-pages/user/index.vue, stores/user-manage.store.ts, server/api/user/delete/:id.delete.ts
+pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user/delete/:id.delete.ts
 
 ### 类型
 页面 + Store + API 路由
@@ -465,7 +465,7 @@ pages/user/index.vue, stores/user-manage.store.ts, server/api/user/delete/:id.de
 角色列表查询
 
 ### 所属模块
-pages/role/index.vue, stores/role.store.ts, server/api/role/all.get.ts
+pages/system/role/index.vue, stores/role.store.ts, server/api/system/role/index.get.ts
 
 ### 类型
 页面 + Store + API 路由
@@ -532,7 +532,7 @@ interface RoleQuery {
 新增角色
 
 ### 所属模块
-modules/role/components/RoleFormDialog.vue, stores/role.store.ts, server/api/role/create.post.ts
+modules/system/role/components/RoleFormDialog.vue, stores/role.store.ts, server/api/system/role/create.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -583,7 +583,7 @@ interface CreateRoleRequest {
 编辑角色
 
 ### 所属模块
-modules/role/components/RoleFormDialog.vue, stores/role.store.ts, server/api/role/update/:id.put.ts
+modules/system/role/components/RoleFormDialog.vue, stores/role.store.ts, server/api/system/role/update/:id.put.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -632,7 +632,7 @@ interface UpdateRoleRequest {
 删除角色
 
 ### 所属模块
-pages/role/index.vue, stores/role.store.ts, server/api/role/delete/:id.delete.ts
+pages/system/role/index.vue, stores/role.store.ts, server/api/system/role/delete/:id.delete.ts
 
 ### 类型
 页面 + Store + API 路由
@@ -675,7 +675,7 @@ pages/role/index.vue, stores/role.store.ts, server/api/role/delete/:id.delete.ts
 角色编码唯一性校验
 
 ### 所属模块
-modules/role/components/RoleFormDialog.vue, server/api/role/check-code.get.ts
+modules/system/role/components/RoleFormDialog.vue, server/api/system/role/check-code.get.ts
 
 ### 类型
 组件 + API 路由
@@ -726,7 +726,7 @@ interface CheckCodeResponse {
 菜单树形展示
 
 ### 所属模块
-pages/menu/index.vue, modules/menu/components/MenuTree.vue, stores/menu.store.ts, server/api/menu/tree.get.ts
+pages/system/menu/index.vue, modules/system/menu/components/MenuTree.vue, stores/menu.store.ts, server/api/system/menu/tree.get.ts
 
 ### 类型
 页面 + 组件 + Store + API 路由
@@ -784,7 +784,7 @@ interface MenuNode {
 新增顶级菜单
 
 ### 所属模块
-modules/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/menu.post.ts
+modules/system/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/system/menu.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -839,7 +839,7 @@ interface CreateMenuRequest {
 新增子菜单
 
 ### 所属模块
-modules/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/menu.post.ts
+modules/system/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/system/menu.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -880,7 +880,7 @@ modules/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/men
 编辑菜单
 
 ### 所属模块
-modules/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/menu/:id.put.ts
+modules/system/menu/components/MenuFormDialog.vue, stores/menu.store.ts, server/api/system/menu/:id.put.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -932,7 +932,7 @@ interface UpdateMenuRequest {
 删除菜单
 
 ### 所属模块
-pages/menu/index.vue, stores/menu.store.ts, server/api/menu/:id.delete.ts
+pages/system/menu/index.vue, stores/menu.store.ts, server/api/system/menu/:id.delete.ts
 
 ### 类型
 页面 + Store + API 路由
@@ -976,7 +976,7 @@ pages/menu/index.vue, stores/menu.store.ts, server/api/menu/:id.delete.ts
 批量更新菜单
 
 ### 所属模块
-modules/menu/components/MenuTree.vue, stores/menu.store.ts, server/api/menu/batch-update.post.ts
+modules/system/menu/components/MenuTree.vue, stores/menu.store.ts, server/api/system/menu/batch-update.post.ts
 
 ### 类型
 组件 + Store + API 路由
@@ -1023,7 +1023,7 @@ interface BatchUpdateItem {
 图标选择器
 
 ### 所属模块
-modules/menu/components/IconPicker.vue
+modules/system/menu/components/IconPicker.vue
 
 ### 类型
 组件

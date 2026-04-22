@@ -72,17 +72,22 @@ best_msc_ui/
 │   ├── types/                  # 共享类型定义目录
 │   │   ├── menu.d.ts           # 菜单相关类型
 │   │   ├── performer.d.ts      # 演员相关类型
+│   │   ├── role.d.ts           # 角色相关类型
 │   │   ├── tasteVideo.d.ts     # 兴趣视频相关类型
 │   │   ├── user.d.ts           # 用户相关类型
 │   │   └── videoPerformer.d.ts # 视频演员关联类型
 │   ├── user.store.ts           # 用户信息、菜单、权限
 │   ├── app.store.ts            # 应用 UI 状态
 │   ├── performer.store.ts      # 演员字典 CRUD
+│   ├── role.store.ts           # 角色管理 CRUD
 │   └── tasteVideo.store.ts     # 兴趣视频管理 CRUD
 ├── modules/components/         # 业务模块组件（自动导入）
 │   ├── performer/              # 演员字典模块
 │   │   ├── PerformerList.vue           # 演员列表组件
 │   │   └── PerformerFormDialog.vue     # 演员表单弹窗
+│   ├── system/role/            # 角色管理模块
+│   │   ├── RoleList.vue                # 角色列表组件
+│   │   └── RoleFormDialog.vue          # 角色表单弹窗
 │   └── tasteVideo/             # 兴趣视频模块
 │       ├── TasteVideoList.vue          # 视频列表组件
 │       ├── TasteVideoFormDialog.vue    # 视频表单弹窗
@@ -96,6 +101,8 @@ best_msc_ui/
 │   │   └── video/              # 视频管理接口
 │   │       ├── performer/      # 演员字典接口（6个）
 │   │       └── taste/          # 兴趣视频接口（8个）
+│   ├── system/                 # 系统管理接口
+│   │   └── role/               # 角色管理接口（5个）
 │   ├── middleware/             # 服务端中间件
 │   │   └── auth.ts             # 服务端注入登录状态
 │   └── utils/                  # 服务端工具
@@ -213,7 +220,39 @@ GET    /api/video/performer/dict          // 获取演员字典
 
 ---
 
-### 3. 兴趣视频管理模块 ✅
+### 3. 角色管理模块 ✅
+
+**位置**:
+- 页面：`pages/system/role/index.vue`
+- Store: `stores/role.store.ts`
+- 模块：`modules/components/system/role/*`
+- API: `server/api/system/role/*`
+
+**功能**:
+- ✅ 角色列表（分页、多条件查询）
+- ✅ 新增角色（表单验证、编码唯一性校验）
+- ✅ 编辑角色（数据回显、编码只读）
+- ✅ 删除角色（二次确认）
+- ✅ 编码唯一性校验（失焦自动校验）
+
+**查询条件**:
+- 角色名称（模糊匹配）
+- 角色编码（模糊匹配）
+- 状态（启用/禁用）
+
+**API 接口**:
+```typescript
+GET    /api/system/role              // 获取角色列表
+GET    /api/system/role/:id          // 获取角色详情
+POST   /api/system/role              // 创建角色
+PUT    /api/system/role              // 更新角色
+DELETE /api/system/role              // 删除角色
+GET    /api/system/role/check-code   // 编码唯一性校验
+```
+
+---
+
+### 4. 兴趣视频管理模块 ✅
 
 **位置**:
 - 页面：`pages/video/taste/index.vue`
@@ -264,7 +303,7 @@ GET    /api/video/performer/dict         // 获取演员字典
 
 ---
 
-### 4. 仪表盘模块 ✅
+### 5. 仪表盘模块 ✅
 
 **位置**:
 - 页面：`pages/index.vue` (首页)
@@ -291,7 +330,7 @@ GET    /api/video/performer/dict         // 获取演员字典
 | Pinia store | use + Store 结尾 | `useUserStore`, `useAppStore` |
 | 目录名 | kebab-case | `user-profile/`, `auth/` |
 | 类型/接口 | PascalCase | `User`, `MenuItem`, `LoginRequest` |
-| API 路由文件 | [name].[method].ts | `login.post.ts`, `all.get.ts` |
+| API 路由文件 | [name].[method].ts | `login.post.ts`, `index.get.ts` |
 | Store 文件名 | [name].store.ts | `user.store.ts`, `menu.store.ts` |
 
 #### 组件结构顺序
@@ -539,12 +578,12 @@ pnpm preview     # 预览生产构建
 
 | 类型 | 数量 | 说明 |
 |------|------|------|
-| **页面** | 5 | index (首页/仪表盘), login, dashboard/index, video/performer/index, video/taste/index |
+| **页面** | 6 | index (首页/仪表盘), login, dashboard/index, video/performer/index, video/taste/index, system/role/index |
 | **全局组件** | 5 | LoginForm, TopBar, UserDropdown, NotificationDropdown, ConfirmDialog |
-| **模块组件** | 5 | PerformerList, PerformerFormDialog, TasteVideoList, TasteVideoFormDialog, TasteVideoPreviewDialog |
-| **Stores** | 4 | user, app, performer, tasteVideo |
+| **模块组件** | 7 | PerformerList, PerformerFormDialog, RoleList, RoleFormDialog, TasteVideoList, TasteVideoFormDialog, TasteVideoPreviewDialog |
+| **Stores** | 5 | user, app, performer, role, tasteVideo |
 | **Composables** | 1 | useMenu |
-| **API 接口** | ~20 | 认证(3) + 演员字典(6) + 兴趣视频(8+) |
+| **API 接口** | ~25 | 认证(3) + 演员字典(6) + 兴趣视频(8+) + 角色管理(5+) |
 | **中间件** | 2 | auth.global.ts (客户端), auth.ts (服务端) |
 | **插件** | 1 | init-auth.client.ts |
 
@@ -555,6 +594,7 @@ pnpm preview     # 预览生产构建
 | 认证模块 | 100% | ✅ |
 | 演员字典管理 | 100% | ✅ |
 | 兴趣视频管理 | 100% | ✅ |
+| 角色管理 | 100% | ✅ |
 | 仪表盘 | 100% | ✅ |
 | UI 组件 | 100% | ✅ |
 | 权限控制 | 60% | 🟡 (基础实现，可扩展 RBAC) |
