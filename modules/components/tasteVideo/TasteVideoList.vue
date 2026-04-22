@@ -2,7 +2,7 @@
 import {h, resolveComponent} from 'vue'
 import {useDebounceFn} from '@vueuse/core'
 import type {TasteVideo, VideoStatus} from '~/stores/types/tasteVideo'
-import {CalendarDate} from '@internationalized/date'
+import {CalendarDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
 import {ConfirmDialog} from '#components'
 
 const tasteVideoStore = useTasteVideoStore()
@@ -70,6 +70,11 @@ const columns: TableColumn<TasteVideo>[] = [
     }
   },
   {
+    accessorKey: 'gmtCreate',
+    header: '创建时间',
+    cell: ({row}: any) => new Date(row.getValue('gmtCreate')).toLocaleString('zh-CN')
+  },
+  {
     accessorKey: 'actions',
     header: '操作',
     enableSorting: false,
@@ -123,8 +128,6 @@ const columns: TableColumn<TasteVideo>[] = [
 ] as const
 
 // 表单查询条件
-const inputDate = useTemplateRef('inputDate')
-
 const queryForm = ref({
   number: '',
   performer: '' as string | number | undefined,
@@ -135,6 +138,11 @@ const queryForm = ref({
 const modelValue = shallowRef({
   start: null as CalendarDate | null,
   end: null as CalendarDate | null
+})
+
+// 日期格式化
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
 })
 
 const formDialogOpen = ref(false)
@@ -150,9 +158,12 @@ onMounted(async () => {
 
 // 获取列表
 async function fetchList() {
-  // 转换日期格式
+  // 转换日期格式：开始时间 00:00:00，结束时间 23:59:59
   const gmtCreate = modelValue.value.start && modelValue.value.end
-      ? [modelValue.value.start.toString(), modelValue.value.end.toString()]
+      ? [
+          `${modelValue.value.start.toString()} 00:00:00`,
+          `${modelValue.value.end.toString()} 23:59:59`
+        ]
       : undefined
   await tasteVideoStore.fetchList({
     pageIndex: 1,
@@ -189,11 +200,11 @@ function resetQuery() {
     number: '',
     performer: undefined,
     rating: undefined,
-    status: undefined,
-    gmtCreate: {
-      start: null,
-      end: null
-    }
+    status: undefined
+  }
+  modelValue.value = {
+    start: null,
+    end: null
   }
   tasteVideoStore.resetQuery()
   fetchList()
@@ -320,35 +331,27 @@ function handleFormSuccess() {
         </UFormGroup>
 
         <UFormGroup label="创建时间">
-          <UInputDate
-            ref="inputDate"
-            v-model="modelValue"
-            range
-            @change="handleQueryChange"
-          >
-            <template #trailing>
-              <UPopover :reference="inputDate?.inputsRef[0]?.$el">
-                <UButton
-                  color="neutral"
-                  variant="link"
-                  size="sm"
-                  icon="i-lucide-calendar"
-                  aria-label="Select a date range"
-                  class="px-0"
-                />
+          <UPopover>
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-calendar"
+              class="w-[280px] justify-start"
+            >
+              {{ modelValue.start && modelValue.end ? `${df.format(modelValue.start.toDate(getLocalTimeZone()))} - ${df.format(modelValue.end.toDate(getLocalTimeZone()))}` : '请选择日期范围' }}
+            </UButton>
 
-                <template #content>
-                  <UCalendar
-                    v-model="modelValue"
-                    class="p-2"
-                    locale="zh-CN"
-                    :number-of-months="2"
-                    range
-                  />
-                </template>
-              </UPopover>
+            <template #content>
+              <UCalendar
+                v-model="modelValue"
+                class="p-2"
+                locale="zh-CN"
+                :number-of-months="2"
+                range
+                @update:model-value="handleQueryChange"
+              />
             </template>
-          </UInputDate>
+          </UPopover>
         </UFormGroup>
 
         <div class="flex items-end gap-2">

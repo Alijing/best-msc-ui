@@ -87,6 +87,8 @@ export const usePerformerStore = defineStore('performer', () => {
 
     if (data.code === 20000) {
       await fetchList()
+      // 发布演员变更事件，通知其他模块刷新字典
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'create', data: payload })
     }
 
     return data
@@ -103,6 +105,8 @@ export const usePerformerStore = defineStore('performer', () => {
 
     if (data.code === 20000) {
       await fetchList()
+      // 发布演员变更事件，通知其他模块刷新字典
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'update', data: payload })
     }
 
     return data
@@ -119,6 +123,8 @@ export const usePerformerStore = defineStore('performer', () => {
 
     if (response.code === 20000 && response.data) {
       await fetchList()
+      // 发布演员变更事件，通知其他模块刷新字典
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'delete', ids })
     }
 
     return response

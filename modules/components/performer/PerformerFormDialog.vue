@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { CalendarDate } from '@internationalized/date'
+import type {FormSubmitEvent} from '@nuxt/ui'
+import {CalendarDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
 
 const store = usePerformerStore()
 
 // ✅ 使用 defineModel 实现双向绑定
-const open = defineModel<boolean>('open', { default: false })
+const open = defineModel<boolean>('open', {default: false})
 
 const props = withDefaults(defineProps<{
   performerId?: string | number | null
@@ -51,8 +51,12 @@ const state = reactive<Schema>({
 })
 
 // 日期选择器引用
-const dateInputRef = ref()
 const selectedDate = shallowRef<CalendarDate | null>(null)
+
+// 日期格式化
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
+})
 
 const loading = ref(false)
 
@@ -65,8 +69,8 @@ watch(open, async (newVal) => {
     state.birthday = ''
     state.height = 158 as any
     state.bust = 80 as any
-    state.waistSize = 80 as any
-    state.hipCircumference = 80 as any
+    state.waistSize = 55 as any
+    state.hipCircumference = 85 as any
     state.cupSize = ''
     state.hobby = ''
     state.remark = ''
@@ -96,7 +100,7 @@ watch(open, async (newVal) => {
       }
     }
   }
-}, { immediate: true })
+}, {immediate: true})
 
 // ✅ 处理日期选择
 function handleDateSelect(date: CalendarDate | null) {
@@ -159,8 +163,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (payload.hipCircumference === '') delete payload.hipCircumference
 
     const response = props.performerId
-      ? await store.updatePerformer(payload)
-      : await store.createPerformer(payload)
+        ? await store.updatePerformer(payload)
+        : await store.createPerformer(payload)
 
     if (!response || !response.data) {
       toast.add({
@@ -301,37 +305,26 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             error: '!mt-0 ms-2'
           }"
         >
-          <UInputDate
-            ref="dateInputRef"
-            v-model="selectedDate"
-            :placeholder="new CalendarDate(1970, 1, 1)"
-            :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
-            class="w-[300px]"
-            @update:model-value="handleDateSelect"
-          >
-            <template #trailing>
-              <UPopover :reference="dateInputRef?.inputRef?.$el">
-                <UButton
-                  color="neutral"
-                  variant="link"
-                  size="sm"
-                  icon="i-lucide-calendar"
-                  aria-label="选择日期"
-                  class="px-0"
-                />
+          <UPopover>
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-calendar"
+              class="w-[300px] justify-start"
+            >
+              {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : '请选择日期' }}
+            </UButton>
 
-                <template #content>
-                  <UCalendar
-                    v-model="selectedDate"
-                    :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
-                    locale="zh-CN"
-                    class="p-2"
-                    @update:model-value="handleDateSelect"
-                  />
-                </template>
-              </UPopover>
+            <template #content>
+              <UCalendar
+                v-model="selectedDate"
+                :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
+                locale="zh-CN"
+                class="p-2"
+                @update:model-value="handleDateSelect"
+              />
             </template>
-          </UInputDate>
+          </UPopover>
         </UFormField>
 
         <UFormField

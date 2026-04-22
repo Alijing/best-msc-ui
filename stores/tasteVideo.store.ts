@@ -41,6 +41,20 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
         previewLoading: false
     }))
 
+    // 初始化时监听演员变更事件
+    if (import.meta.client) {
+        const { on } = useEventBus()
+        on(EVENTS.PERFORMER_CHANGED, async ({ action }) => {
+            console.log('[TasteVideoStore] 检测到演员变更:', action)
+            // 清除缓存，强制重新请求
+            const cached = useState<DictItem[]>('performerDict', () => [])
+            cached.value = []
+            state.value.performerDict = []
+            // 刷新字典
+            await fetchPerformerDict()
+        })
+    }
+
     /**
      * 获取视频列表
      */
@@ -151,7 +165,7 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
             return cached.value
         }
 
-        const response = await clientApiFetch<ApiResponse<DictItem[]>>('/api/video/taste/performer/dict',{
+        const response = await clientApiFetch<ApiResponse<DictItem[]>>('/api/video/performer/dict',{
             method: 'GET'
         })
 

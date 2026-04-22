@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type {FormSubmitEvent} from '@nuxt/ui'
-import {CalendarDate} from '@internationalized/date'
+import {CalendarDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
 
 const store = useTasteVideoStore()
 
@@ -51,8 +51,12 @@ const state = reactive<Schema>({
 })
 
 // 日期选择器引用
-const dateInputRef = ref()
 const selectedDate = shallowRef<CalendarDate | null>(null)
+
+// 日期格式化
+const df = new DateFormatter('zh-CN', {
+  dateStyle: 'medium'
+})
 
 const loading = ref(false)
 
@@ -314,37 +318,26 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           }"
           required
         >
-          <UInputDate
-            ref="dateInputRef"
-            v-model="selectedDate"
-            :placeholder="new CalendarDate(2000, 1, 1)"
-            :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
-            class="w-[300px]"
-            @update:model-value="handleDateSelect"
-          >
-            <template #trailing>
-              <UPopover :reference="dateInputRef?.inputRef?.$el">
-                <UButton
-                  color="neutral"
-                  variant="link"
-                  size="sm"
-                  icon="i-lucide-calendar"
-                  aria-label="选择日期"
-                  class="px-0"
-                />
+          <UPopover>
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-calendar"
+              class="w-[300px] justify-start"
+            >
+              {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : '请选择日期' }}
+            </UButton>
 
-                <template #content>
-                  <UCalendar
-                    v-model="selectedDate"
-                    :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
-                    locale="zh-CN"
-                    class="p-2"
-                    @update:model-value="handleDateSelect"
-                  />
-                </template>
-              </UPopover>
+            <template #content>
+              <UCalendar
+                v-model="selectedDate"
+                :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
+                locale="zh-CN"
+                class="p-2"
+                @update:model-value="handleDateSelect"
+              />
             </template>
-          </UInputDate>
+          </UPopover>
         </UFormField>
 
         <UFormField
