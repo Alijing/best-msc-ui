@@ -12,18 +12,10 @@ const bodySchema = z.object({
 export default defineApiEventHandler({
   validation: bodySchema,
   handler: async (event, payload) => {
-    try {
-      // 调用后端接口删除演员
-      return await serverApiFetch<ApiResponse<boolean>>(event, '/video/performer/info', {
-        method: 'DELETE',
-        body: payload.ids
-      })
-    } catch (error: any) {
-      console.error('删除演员失败:', error)
-      throw createError({
-        status: error.statusCode || 500,
-        message: error.data?.message || error.message || '删除演员失败，请稍后重试'
-      })
-    }
+    // 调用后端接口删除演员
+    return await serverApiFetch<ApiResponse<boolean>>(event, '/video/performer/info', {
+      method: 'DELETE',
+      body: payload.ids
+    })
   }
 })

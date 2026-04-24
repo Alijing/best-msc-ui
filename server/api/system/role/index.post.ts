@@ -15,17 +15,9 @@ const bodySchema = z.object({
 export default defineApiEventHandler({
   validation: bodySchema,
   handler: async (event, payload) => {
-    try {
-      return await serverApiFetch(event, '/sys/role/info', {
-        method: 'POST',
-        body: payload
-      })
-    } catch (error: any) {
-      console.error('创建角色失败:', error)
-      throw createError({
-        status: error.statusCode || 500,
-        message: error.data?.message || error.message || '创建角色失败，请稍后重试'
-      })
-    }
+    return await serverApiFetch(event, '/sys/role/info', {
+      method: 'POST',
+      body: payload
+    })
   }
 })

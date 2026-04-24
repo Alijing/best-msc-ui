@@ -17,19 +17,13 @@ export default defineApiEventHandler({
   
   handler: async (event, payload) => {
     const { number, excludeId } = payload
-    
-    try {
-      // 调用后端接口检查车牌号
-      return await serverApiFetch(event, '/video/taste/number/valid', {
-        method: 'GET',
-        params: {
-          number,
-          excludeId
-        }
-      })
-    } catch (error: any) {
-      console.error('检查车牌号失败:', error)
-      throw error
-    }
+    // 调用后端接口检查车牌号
+    return await serverApiFetch(event, '/video/taste/number/valid', {
+      method: 'GET',
+      params: {
+        number,
+        excludeId
+      }
+    })
   }
 })

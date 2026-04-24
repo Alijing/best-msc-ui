@@ -21,33 +21,26 @@ export default defineApiEventHandler({
   validation: querySchema,
   handler: async (event, payload) => {
     const { pageIndex, pageSize, number, performer, rating, status, gmtCreate } = payload
-    try {
-      // 构建查询参数
-      const queryParams: Record<string, any> = {
-        pageIndex: String(pageIndex),
-        pageSize: String(pageSize)
-      }
-      if (number) queryParams.number = number
-      if (performer) queryParams.performer = performer
-      if (rating !== undefined) queryParams.rating = String(rating)
-      if (status !== undefined) queryParams.status = String(status)
-      // 处理 gmtCreate，可能是字符串或数组
-      if (gmtCreate) {
-        const gmtCreateArray = Array.isArray(gmtCreate) ? gmtCreate : [gmtCreate]
-        if (gmtCreateArray.length > 0) {
-          queryParams.gmtCreate = gmtCreateArray
-        }
-      }
-
-      return await serverApiFetch<ApiResponse<TasteVideo[]>>(event, '/video/taste/list', {
-        method: 'GET',
-        query: queryParams
-      }, true)
-    } catch (error: any) {
-      throw createError({
-        status: error.statusCode || 500,
-        message: error.data?.message || error.message || '获取视频列表失败，请稍后重试'
-      })
+    // 构建查询参数
+    const queryParams: Record<string, any> = {
+      pageIndex: String(pageIndex),
+      pageSize: String(pageSize)
     }
+    if (number) queryParams.number = number
+    if (performer) queryParams.performer = performer
+    if (rating !== undefined) queryParams.rating = String(rating)
+    if (status !== undefined) queryParams.status = String(status)
+    // 处理 gmtCreate，可能是字符串或数组
+    if (gmtCreate) {
+      const gmtCreateArray = Array.isArray(gmtCreate) ? gmtCreate : [gmtCreate]
+      if (gmtCreateArray.length > 0) {
+        queryParams.gmtCreate = gmtCreateArray
+      }
+    }
+
+    return await serverApiFetch<ApiResponse<TasteVideo[]>>(event, '/video/taste/list', {
+      method: 'GET',
+      query: queryParams
+    }, true)
   }
 })

@@ -22,18 +22,10 @@ const bodySchema = z.object({
 export default defineApiEventHandler({
   validation: bodySchema,
   handler: async (event, payload) => {
-    try {
-      // 调用后端接口更新演员
-      return await serverApiFetch<ApiResponse<boolean>>(event, '/video/performer/info', {
-        method: 'PUT',
-        body: payload
-      })
-    } catch (error: any) {
-      console.error('更新演员失败:', error)
-      throw createError({
-        status: error.statusCode || 500,
-        message: error.data?.message || error.message || '更新演员失败，请稍后重试'
-      })
-    }
+    // 调用后端接口更新演员
+    return await serverApiFetch<ApiResponse<boolean>>(event, '/video/performer/info', {
+      method: 'PUT',
+      body: payload
+    })
   }
 })
