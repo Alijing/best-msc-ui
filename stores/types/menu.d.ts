@@ -1,21 +1,71 @@
-/**
- * 菜单相关类型定义
- */
-import type { MenuItem } from './user.d'
-
-export interface MenuState {
-  menuTree: MenuItem[]
+type MenuNode = {
+    id: number | string
+    parentId: number | string
+    name: string
+    path: string
+    icon?: string
+    children?: MenuNode[]
+    permission?: string
+    status?: number
+    remark?: string
+    i18n?: Array<{
+        locale: string
+        name: string
+    }>
 }
 
-export interface MenuCreatePayload {
-  name: string
-  path: string
-  icon?: string
-  parentId?: string | number
-  sort?: number
-  permission?: string
+type CreateMenuRequest = {
+    parentId?: number | string
+    name: string
+    path: string
+    icon?: string
+    status?: number
+    remark?: string
+    i18n: Array<{
+        locale: string
+        name: string
+    }>
+    permission?: string
 }
 
-export interface MenuUpdatePayload extends Partial<MenuCreatePayload> {
-  id: string | number
+type UpdateMenuRequest = {
+    id: number | string
+    parentId?: number | string
+    name?: string
+    path?: string
+    icon?: string
+    status?: number
+    remark?: string
+    i18n?: Array<{
+        locale: string
+        name: string
+    }>
+    permission?: string
+}
+
+type UpdateMenu = {
+    id?: number | string | null
+    parentId: number | string
+    path: string
+    i18ns: Array<{
+        id: 0 | 1
+        name: string
+    }>
+    icon: string
+    permKey?: string
+    status?: number
+    sort?: number
+}
+
+type SortMenu = {
+    id: number | string
+    sort: number
+}
+
+export type {
+    MenuNode,
+    CreateMenuRequest,
+    UpdateMenuRequest,
+    UpdateMenu,
+    SortMenu
 }

@@ -1,9 +1,120 @@
 {
+  // ============================================================
+  //  Nuxt 4 + Vue 3 + TypeScript + Pinia + Nuxt UI 专用配置
+  //  扩展自动生成的 .nuxt/tsconfig.json 以获得 Nuxt 提供的
+  //  路径别名、自动导入类型、模块类型增强等。
+  // ============================================================
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    // ----------------------------------------------------------
+    // 基础编译设置
+    // ----------------------------------------------------------
+    // 编译目标：ESNext 保证现代语法，由 Nuxt 进行最终构建转换
+    "target": "ESNext",
+    // 模块系统：ESNext 以配合 Tree-shaking 和动态导入
+    "module": "ESNext",
+    // 模块解析策略：bundler 模式更适合 Vite / Webpack 等打包工具
+    "moduleResolution": "bundler",
+    // 允许导入 .json 模块
+    "resolveJsonModule": true,
+    // 允许从没有默认导出的模块执行默认导入
+    "allowSyntheticDefaultImports": true,
+    // 强制导入时文件名大小写一致（避免跨平台问题）
+    "forceConsistentCasingInFileNames": true,
+    // 跳过声明文件的类型检查，提升编译速度
+    "skipLibCheck": true,
+    // ----------------------------------------------------------
+    // 严格模式（强烈推荐开启全部选项）
+    // ----------------------------------------------------------
     "strict": true,
-    "types": ["nuxt", "@nuxt/ui", "@pinia/nuxt"]
+    // 严格模式下已包含，此处显式声明以增加可读性
+    "noUnusedLocals": false, // 开发阶段可关闭，避免频繁报错
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true, // 访问索引/数组时考虑 undefined
+    "exactOptionalPropertyTypes": false, // 对可选属性放宽处理，兼容 Vue 响应式
+    // ----------------------------------------------------------
+    // 路径别名（Nuxt 已内置 ~ / @ / ~~ / @@ 等，此处可添加自定义）
+    // 注意：大部分别名由 .nuxt/tsconfig.json 提供，这里仅补充。
+    // ----------------------------------------------------------
+    "baseUrl": ".",
+    "paths": {
+      // 示例：如果你需要额外的自定义别名，可以在此声明
+      "~/*": [
+        "./*"
+      ],
+      "@/*": [
+        "./*"
+      ],
+      "~~/*": [
+        "./*"
+      ],
+      "@@/*": [
+        "./*"
+      ],
+      // 例如添加一个 assets 别名
+      "#assets/*": [
+        "./assets/*"
+      ]
+    },
+    // ----------------------------------------------------------
+    // 类型声明文件
+    // ----------------------------------------------------------
+    // 指定要包含的类型包，Nuxt UI 等模块的类型会自动由 .nuxt/tsconfig.json 引入，
+    // 这里可以补充全局需要的类型，例如 Node.js 类型（SSR 需要）
+    "types": [
+      "node",
+      "nuxt",
+      "@nuxt/ui",
+      "@pinia/nuxt"
+      // 如果使用了某些需要全局类型的测试库，可在此添加
+      // "vitest/globals"
+    ],
+    // ----------------------------------------------------------
+    // JSX 支持（Vue 使用 JSX 时需要）
+    // ----------------------------------------------------------
+    "jsx": "preserve",
+    // 使用 Vue 的 JSX 转换（若你用 @vue/babel-plugin-jsx 或相关工具）
+    "jsxImportSource": "vue",
+    // ----------------------------------------------------------
+    // 其他实用选项
+    // ----------------------------------------------------------
+    // 启用装饰器（若使用 Vue Class Component 等）
+    "experimentalDecorators": true,
+    // 允许在 .ts 文件中导入 .vue 文件
+    "allowImportingTsExtensions": false,
+    // 生成 SourceMap 以方便调试（生产构建时 Nuxt 会处理）
+    "sourceMap": true,
+    // 指定生成的输出目录（通常由构建工具覆盖，此处仅为类型检查设置）
+    "outDir": "./dist",
+    // 项目使用的库（由 target 自动引入，可按需补充）
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ]
   },
-  "include": ["**/*.ts", "**/*.vue"],
-  "exclude": ["node_modules", ".nuxt", "dist"]
+  // ============================================================
+  // 包含与排除
+  // ============================================================
+  "include": [
+    // 包含所有 .ts, .vue, .d.ts 文件
+    "src/**/*.ts",
+    "src/**/*.vue",
+    // Nuxt 自动生成的类型声明
+    ".nuxt/nuxt.d.ts",
+    // 项目自定义的类型声明
+    "types/**/*.d.ts",
+    // Nuxt 配置文件本身
+    "nuxt.config.ts",
+    // 服务端目录
+    "server/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".output",
+    // 排除自动生成的一些文件以避免重复检查
+    ".nuxt/dist"
+  ]
 }

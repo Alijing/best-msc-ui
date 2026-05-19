@@ -757,7 +757,7 @@ interface MenuNode {
 
 ### 依赖
 - usePerformerStore (fetchList 方法)
-- UTree 或自定义树形组件
+- UTree 或 UTable 或自定义树形组件
 - $fetch / clientApiFetch
 
 ### 样式要求

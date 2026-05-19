@@ -2,7 +2,6 @@
 import { h, resolveComponent } from 'vue'
 import type { Role } from '~/stores/types/role'
 import RoleFormDialog from './RoleFormDialog.vue'
-import { ConfirmDialog } from '#components'
 
 const roleStore = useRoleStore()
 const overlay = useOverlay()
