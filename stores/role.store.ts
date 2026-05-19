@@ -1,222 +1,203 @@
+/**
+ * 角色管理 Store
+ */
 import { defineStore } from 'pinia'
+import type { ApiResponse } from '~/types/api'
+import type { Role, RoleQuery, RoleRequest } from '~/stores/types/role'
 
-// 角色类型
-export interface Role {
-  id: number
-  name: string
-  code: string
-  status: 0 | 1
-  remark?: string
-  createTime: Date
-}
-
-// 查询参数类型
-export interface RoleQuery {
-  pageIndex: number
-  pageSize: number
-  name?: string
-  code?: string
-  status?: 0 | 1
-}
-
-// 新增角色请求类型
-export interface CreateRoleRequest {
-  name: string
-  code: string
-  status: 0 | 1
-  remark?: string
-}
-
-// 编辑角色请求类型
-export interface UpdateRoleRequest {
-  name?: string
-  code?: string
-  status?: 0 | 1
-  remark?: string
-}
-
-// 角色列表响应类型
-export interface RoleListResponse {
+export interface RoleState {
+  list: Role[]
   total: number
-  data: Role[]
+  loading: boolean
+  query: RoleQuery
+  // 编码验证状态
+  codeValidating: boolean
+  codeError: string
 }
 
-// 角色管理 Store
 export const useRoleStore = defineStore('role', () => {
-  // State
-  const roles = ref<Role[]>([])
-  const total = ref(0)
-  const loading = ref(false)
-  const query = ref<RoleQuery>({
-    pageIndex: 1,
-    pageSize: 10,
-    name: '',
-    code: '',
-    status: undefined
-  })
+  const state = useState<RoleState>('role', () => ({
+    list: [],
+    total: 0,
+    loading: false,
+    query: {
+      pageIndex: 1,
+      pageSize: 10,
+      name: undefined,
+      code: undefined,
+      status: undefined
+    },
+    codeValidating: false,
+    codeError: ''
+  }))
 
-  // Actions
   /**
    * 获取角色列表
    */
-  async function fetchRoles() {
-    loading.value = true
+  async function fetchList(query?: Partial<RoleQuery>) {
     try {
-      const params = {
-        page: query.value.pageIndex,
-        pageSize: query.value.pageSize,
-        name: query.value.name || '',
-        code: query.value.code || '',
-        status: query.value.status !== undefined ? String(query.value.status) : ''
+      state.value.loading = true
+
+      if (query) {
+        state.value.query = { ...state.value.query, ...query }
       }
-      
-      const data = await $fetch<RoleListResponse>('/api/role/all', {
+
+      const response = await clientApiFetch('/api/system/role', {
         method: 'GET',
-        query: params
+        query: {
+          pageIndex: state.value.query.pageIndex,
+          pageSize: state.value.query.pageSize,
+          ...(state.value.query.name && { name: state.value.query.name }),
+          ...(state.value.query.code && { code: state.value.query.code }),
+          ...(state.value.query.status !== undefined && { status: state.value.query.status })
+        }
       })
-      
-      roles.value = data.data
-      total.value = data.total
+
+      if (response.code === 20000) {
+        state.value.list = response.data
+        state.value.total = response.total || 0
+      }
     } catch (error) {
-      console.error('获取角色列表失败:', error)
-      ElMessage.error('获取角色列表失败')
+      console.error('[RoleStore] 获取角色列表失败:', error)
+      state.value.list = []
+      state.value.total = 0
     } finally {
-      loading.value = false
+      state.value.loading = false
     }
   }
 
   /**
-   * 新增角色
+   * 根据ID获取角色详情
    */
-  async function createRole(roleData: CreateRoleRequest) {
-    loading.value = true
-    try {
-      await $fetch('/api/role/create', {
-        method: 'POST',
-        body: roleData
-      })
-      
-      ElMessage.success('新增角色成功')
-      await fetchRoles()
-      return true
-    } catch (error) {
-      console.error('新增角色失败:', error)
-      return false
-    } finally {
-      loading.value = false
+  async function fetchRoleById(id: string | number): Promise<RoleRequest | null> {
+    const response = await clientApiFetch(`/api/system/role/${id}`, {
+      method: 'GET'
+    })
+
+    if (response.code === 20000) {
+      return response.data
     }
+    return null
   }
 
   /**
-   * 编辑角色
+   * 创建角色
    */
-  async function updateRole(id: number, roleData: UpdateRoleRequest) {
-    loading.value = true
-    try {
-      await $fetch(`/api/role/update/${id}`, {
-        method: 'PUT',
-        body: roleData
-      })
-      
-      ElMessage.success('编辑角色成功')
-      await fetchRoles()
-      return true
-    } catch (error) {
-      console.error('编辑角色失败:', error)
-      return false
-    } finally {
-      loading.value = false
+  async function createRole(payload: RoleRequest) {
+    const data = await clientApiFetch('/api/system/role', {
+      method: 'POST',
+      body: payload
+    })
+
+    if (data.code === 20000) {
+      await fetchList()
     }
+
+    return data
+  }
+
+  /**
+   * 更新角色
+   */
+  async function updateRole(payload: RoleRequest) {
+    const data = await clientApiFetch('/api/system/role', {
+      method: 'PUT',
+      body: payload
+    })
+
+    if (data.code === 20000) {
+      await fetchList()
+    }
+
+    return data
   }
 
   /**
    * 删除角色
    */
-  async function deleteRole(id: number) {
-    loading.value = true
-    try {
-      await $fetch(`/api/role/delete/${id}`, {
-        method: 'DELETE'
-      })
-      
-      ElMessage.success('删除角色成功')
-      await fetchRoles()
-      return true
-    } catch (error) {
-      console.error('删除角色失败:', error)
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
+  async function deleteRole(ids: (string | number)[]) {
+    const response = await clientApiFetch('/api/system/role', {
+      method: 'DELETE',
+      body: { ids }
+    })
 
-  /**
-   * 获取单个角色（用于编辑回显）
-   */
-  async function getRoleById(id: number): Promise<Role | null> {
-    try {
-      const data = await $fetch<Role>(`/api/role/${id}`)
-      return data
-    } catch (error) {
-      console.error('获取角色详情失败:', error)
-      ElMessage.error('获取角色详情失败')
-      return null
+    if (response.code === 20000 && response.data) {
+      await fetchList()
     }
-  }
 
-  /**
-   * 设置查询条件
-   */
-  function setQuery(key: keyof RoleQuery, value: any) {
-    if (key !== 'pageIndex' && key !== 'pageSize') {
-      query.value[key] = value
-    }
+    return response
   }
 
   /**
    * 重置查询条件
    */
   function resetQuery() {
-    query.value = {
+    state.value.query = {
       pageIndex: 1,
       pageSize: 10,
-      name: '',
-      code: '',
+      name: undefined,
+      code: undefined,
       status: undefined
     }
   }
 
   /**
-   * 设置分页
+   * 验证角色编码唯一性
    */
-  function setPage(page: number) {
-    query.value.pageIndex = page
+  async function validateCode(code: string, excludeId?: string | number) {
+    // 清空之前的错误
+    state.value.codeError = ''
+
+    // 如果为空，不验证
+    if (!code) {
+      return
+    }
+
+    state.value.codeValidating = true
+
+    try {
+      const params: any = { code }
+      if (excludeId !== undefined && excludeId !== null) {
+        params.id = String(excludeId)
+      }
+
+      const response = await clientApiFetch<ApiResponse<boolean>>('/api/system/role/check-code', {
+        method: 'GET',
+        params
+      })
+
+      if (response.code === 20000 && !response.data.available) {
+        state.value.codeError = response.data.message || '角色编码已存在'
+      }
+    } catch (error) {
+      console.error('[RoleStore] 验证角色编码失败:', error)
+      state.value.codeError = '验证失败，请重试'
+    } finally {
+      state.value.codeValidating = false
+    }
   }
 
   /**
-   * 设置每页条数
+   * 清除编码验证错误
    */
-  function setPageSize(size: number) {
-    query.value.pageSize = size
-    query.value.pageIndex = 1
+  function clearCodeError() {
+    state.value.codeError = ''
   }
 
   return {
-    // State
-    roles,
-    total,
-    loading,
-    query,
-    
-    // Actions
-    fetchRoles,
+    list: computed(() => state.value.list),
+    total: computed(() => state.value.total),
+    loading: computed(() => state.value.loading),
+    query: computed(() => state.value.query),
+    codeValidating: computed(() => state.value.codeValidating),
+    codeError: computed(() => state.value.codeError),
+    fetchList,
+    fetchRoleById,
     createRole,
     updateRole,
     deleteRole,
-    getRoleById,
-    setQuery,
     resetQuery,
-    setPage,
-    setPageSize
+    validateCode,
+    clearCodeError
   }
 })

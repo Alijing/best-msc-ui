@@ -1,143 +1,87 @@
-<template>
-  <el-dropdown class="notification-dropdown">
-    <el-badge :value="notifications.filter(n => !n.read).length" :hidden="notifications.length === 0">
-      <el-button text>
-        <el-icon><Bell /></el-icon>
-      </el-button>
-    </el-badge>
-
-    <template #dropdown>
-      <el-dropdown-menu class="w-80">
-        <div class="p-4 border-b border-gray-200 flex-between">
-          <span class="font-medium">通知</span>
-          <el-button 
-            v-if="unreadCount > 0" 
-            text 
-            type="primary" 
-            size="small"
-            @click="markAllAsRead"
-          >
-            全部已读
-          </el-button>
-        </div>
-
-        <el-scrollbar max-height="400px">
-          <div v-if="notifications.length === 0" class="p-8 text-center text-gray-400">
-            <el-icon size="48"><Bell /></el-icon>
-            <p class="mt-2">暂无通知</p>
-          </div>
-
-          <div v-else>
-            <el-dropdown-item
-              v-for="notification in notifications"
-              :key="notification.id"
-              :class="{ 'bg-blue-50': !notification.read }"
-              class="py-3"
-            >
-              <div class="flex items-start gap-3">
-                <el-icon 
-                  :size="20" 
-                  :class="getNotificationIconColor(notification.type)"
-                >
-                  <component :is="getNotificationIcon(notification.type)" />
-                </el-icon>
-                <div class="flex-1">
-                  <div class="text-sm font-medium">{{ notification.title }}</div>
-                  <div class="text-xs text-gray-500 mt-1">{{ notification.message }}</div>
-                  <div class="text-xs text-gray-400 mt-1">{{ formatTime(notification.time) }}</div>
-                </div>
-              </div>
-            </el-dropdown-item>
-          </div>
-        </el-scrollbar>
-
-        <div v-if="notifications.length > 0" class="p-3 border-t border-gray-200 text-center">
-          <el-button text type="primary" size="small">
-            查看全部
-          </el-button>
-        </div>
-      </el-dropdown-menu>
-    </template>
-  </el-dropdown>
-</template>
-
 <script setup lang="ts">
-// 通知下拉组件
-interface Notification {
-  id: number
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  time: string
-  read: boolean
-}
+const isOpen = ref(false)
 
-// 模拟通知数据（实际应从 API 获取）
-const notifications = ref<Notification[]>([
-  {
-    id: 1,
-    title: '系统更新',
-    message: '系统已完成升级，请刷新页面查看新功能',
-    type: 'info',
-    time: '10 分钟前',
-    read: false
-  },
-  {
-    id: 2,
-    title: '任务完成',
-    message: '您发起的数据处理任务已成功完成',
-    type: 'success',
-    time: '1 小时前',
-    read: false
-  }
+// 模拟通知数据
+const notifications = ref([
+  { id: '1', title: '系统通知', message: '欢迎使用管理系统', time: '5 分钟前', read: false },
+  { id: '2', title: '更新提示', message: '系统已更新到最新版本', time: '1 小时前', read: false }
 ])
 
 const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
 
-/**
- * 获取通知图标
- */
-function getNotificationIcon(type: string) {
-  const icons = {
-    info: 'InfoFilled',
-    success: 'SuccessFilled',
-    warning: 'Warning',
-    error: 'Warning'
+function markAsRead(id: string) {
+  const notification = notifications.value.find(n => n.id === id)
+  if (notification) {
+    notification.read = true
   }
-  return icons[type as keyof typeof icons] || 'InfoFilled'
 }
 
-/**
- * 获取图标颜色
- */
-function getNotificationIconColor(type: string) {
-  const colors = {
-    info: '#909399',
-    success: '#67C23A',
-    warning: '#E6A23C',
-    error: '#F56C6C'
-  }
-  return colors[type as keyof typeof colors] || '#909399'
-}
-
-/**
- * 格式化时间
- */
-function formatTime(time: string) {
-  return time
-}
-
-/**
- * 标记全部为已读
- */
-function markAllAsRead() {
-  notifications.value.forEach(n => n.read = true)
+function viewAll() {
+  console.log('查看全部')
 }
 </script>
 
-<style scoped>
-.notification-dropdown :deep(.el-badge__content.is-fixed) {
-  top: 4px;
-  right: 8px;
-}
-</style>
+<template>
+  <UDropdown v-model:open="isOpen" :items="[]">
+    <button class="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <UIcon name="i-heroicons-bell" class="w-5 h-5 text-gray-600 dark:text-gray-300" />
+      
+      <UBadge
+        v-if="unreadCount > 0"
+        color="red"
+        size="xs"
+        class="absolute top-1 right-1"
+      />
+    </button>
+    
+    <template #panel>
+      <div class="w-80">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">通知</h3>
+          <span class="text-xs text-gray-500">{{ notifications.length }} 条</span>
+        </div>
+        
+        <div class="max-h-64 overflow-y-auto">
+          <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            @click="markAsRead(notification.id)"
+            :class="[
+              'px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800',
+              notification.read ? 'opacity-60' : ''
+            ]"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <h4 class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  {{ notification.title }}
+                </h4>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  {{ notification.message }}
+                </p>
+              </div>
+              <span class="text-xs text-gray-400">{{ notification.time }}</span>
+            </div>
+          </div>
+          
+          <div v-if="notifications.length === 0" class="px-4 py-8 text-center text-gray-500">
+            暂无通知
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-200 dark:border-gray-700">
+          <UButton
+            @click="viewAll"
+            variant="ghost"
+            class="w-full"
+          >
+            <template #leading>
+              <UIcon name="i-heroicons-eye" class="w-4 h-4" />
+            </template>
+            查看全部
+          </UButton>
+        </div>
+      </div>
+    </template>
+  </UDropdown>
+</template>

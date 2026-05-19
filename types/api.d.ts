@@ -1,18 +1,18 @@
 /**
- * API 响应统一结构
+ * API 统一响应结构
  */
 export interface ApiResponse<T = any> {
-  code: number
+  code: number      // 20000 表示成功
   data: T
   message: string
   success: boolean
-  total?: number  // 列表接口可能有 total
+  total?: number    // 列表接口可能有 total
 }
 
 /**
- * 分页列表响应
+ * 字典项
  */
-export interface ListResponse<T = any> {
-  list: T[]
-  total: number
+export interface DictItem {
+  id: string | number
+  name: string
 }

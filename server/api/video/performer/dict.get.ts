@@ -1,23 +1,26 @@
-import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
-import type { PerformerDictItem } from '~/stores/types/tasteVideo'
+/**
+ * 获取演员字典
+ */
+import { z } from 'zod'
+import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
+import {serverApiFetch} from '~/utils/api'
+import type {ApiResponse, DictItem} from "~/types/api"
+
+const querySchema = z.object({
+  name: z.string().optional()
+})
 
 export default defineApiEventHandler({
-  handler: async () => {
-    // TODO: 从真实数据库获取演员数据
-    // 这里是示例数据，实际应该从数据库查询
-    const performers: PerformerDictItem[] = [
-      { id: 1, name: '演员 A' },
-      { id: 2, name: '演员 B' },
-      { id: 3, name: '演员 C' },
-      { id: 4, name: '演员 D' },
-      { id: 5, name: '演员 E' }
-    ]
-    
-    return {
-      code: 20000,
-      data: performers,
-      message: 'success',
-      success: true
-    }
+  validation: querySchema,
+  handler: async (event, payload) => {
+    const { name } = payload
+    // 构建查询参数
+    const queryParams: Record<string, any> = {}
+    if (name) queryParams.name = name
+
+    return await serverApiFetch<ApiResponse<DictItem[]>>(event, '/video/performer/dict', {
+      method: 'GET',
+      query: queryParams
+    }, true)
   }
 })

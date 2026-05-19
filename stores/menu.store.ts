@@ -1,146 +1,261 @@
-import { defineStore } from 'pinia'
-import type { MenuNode, CreateMenuRequest, UpdateMenuRequest, BatchUpdateItem } from '../types/menu'
+// 菜单管理 Store
+import { defineStore } from "pinia";
+import type { ApiResponse } from '~/types/api'
+import type { MenuNode, SortMenu, UpdateMenu } from "~/stores/types/menu";
 
-export const useMenuStore = defineStore('menu', () => {
+export const useMenuStore = defineStore("menu", () => {
   // State
-  const menuTree = ref<MenuNode[]>([])
-  const loading = ref(false)
+  const menus = ref<MenuNode[]>([]);
+  const selectedMenu = ref<MenuNode | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const toast = useToast();
+
+  // Getters
+  const getMenuTree = computed(() => menus.value);
+  const isLoading = computed(() => loading.value);
+  const getError = computed(() => error.value);
 
   // Actions
-  /**
-   * 获取菜单树
-   */
-  async function fetchMenuTree() {
-    loading.value = true
+  const createMenu = async (menu: UpdateMenu) => {
+    loading.value = true;
+    error.value = null;
     try {
-      const data = await $fetch<MenuNode[]>('/api/menu/tree')
-      menuTree.value = data
-      return data
-    } catch (error) {
-      console.error('获取菜单树失败:', error)
-      ElMessage.error('获取菜单树失败')
-      return []
-    } finally {
-      loading.value = false
-    }
-  }
+      const response = await clientApiFetch("/api/system/menu", {
+        method: "POST",
+        body: menu,
+      });
 
-  /**
-   * 新增菜单
-   */
-  async function createMenu(menuData: CreateMenuRequest) {
-    loading.value = true
-    try {
-      await $fetch('/api/menu', {
-        method: 'POST',
-        body: menuData
-      })
-      
-      ElMessage.success('新增菜单成功')
-      await fetchMenuTree()
-      return true
-    } catch (error) {
-      console.error('新增菜单失败:', error)
-      ElMessage.error('新增菜单失败')
-      return false
+      await fetchMenuTree();
+      toast.add({
+        title: "成功",
+        description: "菜单创建成功",
+        color: "success",
+      });
+      return response;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "创建菜单失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage || "创建菜单失败",
+        color: "error",
+      });
+      throw error;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
-  /**
-   * 编辑菜单
-   */
-  async function updateMenu(id: number, menuData: UpdateMenuRequest) {
-    loading.value = true
+  const fetchMenuTree = async () => {
+    loading.value = true;
+    error.value = null;
     try {
-      await $fetch(`/api/menu/${id}`, {
-        method: 'PUT',
-        body: menuData
-      })
-      
-      ElMessage.success('编辑菜单成功')
-      await fetchMenuTree()
-      return true
-    } catch (error) {
-      console.error('编辑菜单失败:', error)
-      ElMessage.error('编辑菜单失败')
-      return false
+      const response = await clientApiFetch<MenuNode[]>(
+        "/api/system/menu/tree",
+        { method: "GET" },
+      );
+      menus.value = response.data || [];
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "获取菜单失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage,
+        color: "error",
+      });
+      throw error;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
-  /**
-   * 删除菜单
-   */
-  async function deleteMenu(id: number) {
-    loading.value = true
+  const updateMenu = async (menu: UpdateMenu) => {
+    loading.value = true;
+    error.value = null;
     try {
-      await $fetch(`/api/menu/${id}`, {
-        method: 'DELETE'
-      })
-      
-      ElMessage.success('删除菜单成功')
-      await fetchMenuTree()
-      return true
-    } catch (error) {
-      console.error('删除菜单失败:', error)
-      ElMessage.error('删除菜单失败')
-      return false
+      const response = await clientApiFetch("/api/system/menu", {
+        method: "PUT",
+        body: menu,
+      });
+      // 更新成功后刷新菜单
+      await fetchMenuTree();
+      toast.add({
+        title: "成功",
+        description: "菜单更新成功",
+        color: "success",
+      });
+      return response;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "更新菜单失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage || "更新菜单失败",
+        color: "error",
+      });
+      throw error;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
-  /**
-   * 批量更新菜单（用于拖拽排序）
-   */
-  async function batchUpdateMenu(items: BatchUpdateItem[]) {
-    loading.value = true
+  const deleteMenu = async (id: number | string) => {
+    loading.value = true;
+    error.value = null;
     try {
-      await $fetch('/api/menu/batch-update', {
-        method: 'POST',
-        body: items
-      })
-      
-      ElMessage.success('保存排序成功')
-      await fetchMenuTree()
-      return true
-    } catch (error) {
-      console.error('批量更新失败:', error)
-      ElMessage.error('批量更新失败')
-      return false
+      if (id === undefined || id === null || id === "") {
+        throw createError({
+          status: 30400,
+          message: "菜单ID不能为空",
+        });
+      }
+
+      const response = await clientApiFetch<ApiResponse<boolean>>(
+        "/api/system/menu",
+        {
+          method: "DELETE",
+          body: { ids: [id] },
+        },
+      );
+
+      if (response.code !== 20000) {
+        throw new Error(response.message || "菜单删除失败");
+      }
+
+      toast.add({
+        title: "成功",
+        description: "菜单删除成功",
+        color: "success",
+      });
+
+      await fetchMenuTree();
+
+      return true;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "菜单删除失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage,
+        color: "error",
+      });
+      return false;
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }
+  };
 
-  /**
-   * 获取单个菜单详情
-   */
-  async function getMenuById(id: number): Promise<MenuNode | null> {
+  const sortMenu = async (items: SortMenu[]) => {
+    loading.value = true;
+    error.value = null;
     try {
-      const data = await $fetch<MenuNode>(`/api/menu/${id}`)
-      return data
-    } catch (error) {
-      console.error('获取菜单详情失败:', error)
-      ElMessage.error('获取菜单详情失败')
-      return null
+      // 发送排序请求
+      await clientApiFetch("/api/system/menu/sort", {
+        method: "POST",
+        body: { items },
+      });
+
+      // 排序成功后刷新菜单树
+      await fetchMenuTree();
+      toast.add({
+        title: "成功",
+        description: "菜单排序更新成功",
+        color: "success",
+      });
+      return true;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "菜单排序更新失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage || "菜单排序更新失败",
+        color: "error",
+      });
+      return false;
+    } finally {
+      loading.value = false;
     }
-  }
+  };
+
+  const checkPathExist = async (path: string, excludeId?: number) => {
+    error.value = null;
+    try {
+      // 发送路径检查请求
+      const response = await clientApiFetch("/api/system/menu/check-path", {
+        method: "GET",
+        query: { path, excludeId },
+      });
+
+      // 检查路径是否可用
+      if (!response.data) {
+        error.value = response.message || "路径已存在";
+        toast.add({
+          title: "警告",
+          description: response.message || "路径已存在",
+          color: "warning",
+        });
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "路径检查失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage || "路径检查失败",
+        color: "error",
+      });
+      throw error;
+    }
+  };
+
+  const fetchMenuById = async (id: number | string) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await clientApiFetch<UpdateMenu>(
+        `/api/system/menu/${id}`,
+        { method: "GET" },
+      );
+      if (response.code === 20000 && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || "获取菜单详情失败");
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "获取菜单详情失败";
+      toast.add({
+        title: "错误",
+        description: errorMessage,
+        color: "error",
+      });
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
 
   return {
     // State
-    menuTree,
+    menus,
+    selectedMenu,
     loading,
-    
+    error,
+
+    // Getters
+    getMenuTree,
+    isLoading,
+    getError,
+
     // Actions
-    fetchMenuTree,
     createMenu,
+    fetchMenuTree,
+    fetchMenuById,
     updateMenu,
     deleteMenu,
-    batchUpdateMenu,
-    getMenuById
-  }
-})
+    sortMenu,
+    checkPathExist,
+  };
+});

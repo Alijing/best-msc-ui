@@ -1,27 +1,27 @@
-import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
+/**
+ * 创建兴趣视频
+ */
 import { z } from 'zod'
+import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
+import { serverApiFetch } from '~/utils/api'
 
 const bodySchema = z.object({
-  number: z.string().min(1, '车牌号不能为空'),
-  name: z.string().min(1, '名称不能为空'),
-  performer: z.union([z.number(), z.string()]),
-  releaseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '日期格式不正确'),
+  number: z.string(),
+  name: z.string(),
+  performer: z.union([z.string(), z.number()]),
+  releaseDate: z.string(),
   rating: z.number().min(1).max(5),
-  status: z.enum(['0', '1', '2']).transform(Number),
-  magnetUri: z.string().min(1, '磁力链接不能为空')
+  status: z.number().min(0).max(2),
+  magnetUri: z.string()
 })
 
 export default defineApiEventHandler({
   validation: bodySchema,
   handler: async (event, payload) => {
-    // TODO: 保存到真实数据库
-    console.log('创建视频:', payload)
-    
-    return {
-      code: 20000,
-      data: { success: true },
-      message: '创建成功',
-      success: true
-    }
+    // 调用后端接口创建视频
+    return await serverApiFetch<ApiResponse<boolean>>(event, '/video/taste/info', {
+      method: 'POST',
+      body: payload
+    })
   }
 })

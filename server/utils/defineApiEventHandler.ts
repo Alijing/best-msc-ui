@@ -1,87 +1,81 @@
 import { z } from 'zod'
 import type { H3Event } from 'h3'
-import {H3Error} from "h3";
+import { createError } from 'h3'
 
 /**
  * API 统一处理器
- * 封装验证、守卫逻辑，统一错误处理
+ * 封装验证、守卫和错误处理逻辑
  */
 export function defineApiEventHandler<T extends z.ZodTypeAny>(config: {
-  /**
-   * Zod 验证 schema
-   */
-  validation?: T
-  
-  /**
-   * 守卫函数数组（验证通过后执行）
-   */
-  guards?: Array<(event: H3Event, payload: z.infer<T>) => Promise<void>>
-  
-  /**
-   * 实际处理函数
-   */
-  handler: (event: H3Event, payload: z.infer<T>) => Promise<any>
+  validation?: T  // Zod 验证 schema
+  guards?: Array<(event: H3Event, payload: z.infer<T>) => Promise<void>>  // 守卫函数
+  handler: (event: H3Event, payload: z.infer<T>) => Promise<any>  // 处理函数
 }) {
   return defineEventHandler(async (event) => {
     try {
-      // 获取请求参数
-      const method = event.method
+      // 1. 获取并合并参数（body + query）
+      const method = event.method.toUpperCase()
       let body: any = {}
       let query: any = {}
 
-      // 根据请求方法获取参数
-      if (['POST', 'PUT', 'PATCH'].includes(method)) {
+      if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
         body = await readBody(event)
       } else {
         query = getQuery(event)
       }
 
-      // 合并参数
-      const allParams = { ...body, ...query }
+      const payload = { ...query, ...body }
 
-      // Zod 验证
-      let validatedData: z.infer<T> = allParams
-      
+      // 2. Zod 验证（如果提供了 validation schema）
       if (config.validation) {
         try {
-          validatedData = await config.validation.parseAsync(allParams)
-        } catch (error) {
-          if (error instanceof z.ZodError) {
+          const validatedData = config.validation.parse(payload)
+          // 执行守卫
+          if (config.guards) {
+            for (const guard of config.guards) {
+              await guard(event, validatedData)
+            }
+          }
+          
+          // 执行处理函数
+          return await config.handler(event, validatedData)
+        } catch (validationError) {
+          if (validationError instanceof z.ZodError) {
             throw createError({
               statusCode: 422,
-              message: '参数验证失败',
-              data: error.errors.map(e => ({
-                field: e.path.join('.'),
-                message: e.message
-              }))
+              message: '验证失败',
+              data: {
+                errors: validationError.errors.map(err => ({
+                  field: err.path.join('.'),
+                  message: err.message
+                }))
+              }
             })
           }
-          throw error
+          throw validationError
         }
-      }
-
-      // 执行守卫
-      if (config.guards) {
-        for (const guard of config.guards) {
-          await guard(event, validatedData)
+      } else {
+        // 无验证，直接执行守卫和处理
+        if (config.guards) {
+          for (const guard of config.guards) {
+            await guard(event, payload)
+          }
         }
+        
+        return await config.handler(event, payload)
       }
-
-      // 执行处理函数
-      const result = await config.handler(event, validatedData)
-      
-      return result
-    } catch (error) {
-      // 统一错误处理
-      if (error instanceof H3Error) {
+    } catch (error: any) {
+      // 5. 统一错误处理
+      if (error.statusCode) {
+        // H3Error 直接抛出
         throw error
       }
       
-      console.error('API 错误:', error)
-      
+      // 其他错误转为 500
+      console.error('API Error:', error)
       throw createError({
         statusCode: 500,
-        message: error instanceof Error ? error.message : '服务器内部错误'
+        message: error.message || '服务器内部错误'
       })
     }
   })

@@ -1,82 +1,84 @@
-import type { MenuItem } from '~/stores/user.store'
+import type { MenuItem } from '~/stores/types/user'
 
 /**
  * 菜单组合式函数
- * 提供权限过滤后的菜单和面包屑导航
+ * 提供权限过滤和面包屑生成功能
  */
 export function useMenu() {
   const userStore = useUserStore()
   const route = useRoute()
 
   /**
-   * 获取已过滤权限的菜单
-   * 根据用户权限过滤不可见的菜单项
+   * 根据权限过滤菜单
    */
-  const menus = computed(() => {
-    const allMenus = userStore.menus || []
+  function filterMenusByPermission(menus: MenuItem[]): MenuItem[] {
+    const permissions = userStore.permissions
     
-    // 如果没有设置权限，返回所有菜单
-    if (!userStore.permissions?.value?.length) {
-      return allMenus
-    }
-
-    // 递归过滤菜单
-    const filterMenus = (menus: MenuItem[]): MenuItem[] => {
+    // 如果没有权限限制，返回所有菜单
+    if (!permissions || permissions.length === 0) {
       return menus
-        .filter(menu => {
-          // 如果没有设置权限要求，或用户有该权限，或是管理员，显示该菜单
-          if (!menu.permission) return true
-          // 确保 hasPermission 存在且可调用
-          if (typeof userStore.hasPermission !== 'function') return true
-          return userStore.hasPermission(menu.permission)
-        })
-        .map(menu => ({
-          ...menu,
-          children: menu.children ? filterMenus(menu.children) : undefined
-        }))
-        .filter(menu => !menu.children || menu.children.length > 0)
     }
 
-    return filterMenus(allMenus)
-  })
+    // 递归过滤菜单树
+    function filter(menuItems: MenuItem[]): MenuItem[] {
+      return menuItems
+        .filter(item => {
+          // 如果没有设置权限，默认允许访问
+          if (!item.permission) {
+            return true
+          }
+          // 检查是否包含所需权限
+          return permissions.includes(item.permission)
+        })
+        .map(item => ({
+          ...item,
+          children: item.children ? filter(item.children) : undefined
+        }))
+        .filter(item => !item.children || item.children.length > 0)
+    }
+
+    return filter(menus)
+  }
 
   /**
-   * 生成面包屑导航
-   * 基于当前路由路径生成层级面包屑
+   * 获取已过滤的菜单列表
    */
-  const breadcrumbs = computed(() => {
-    const paths = route.path.split('/').filter(Boolean)
-    const crumbs: Array<{ path: string; title: string }> = []
+  const menus = computed(() => filterMenusByPermission(userStore.menus))
 
-    let currentPath = ''
+  /**
+   * 生成面包屑
+   */
+  function generateBreadcrumbs(): Array<{ name: string; path: string }> {
+    const breadcrumbs: Array<{ name: string; path: string }> = []
     
     // 添加首页
-    crumbs.push({ path: '/', title: '首页' })
-
-    // 遍历路径生成面包屑
-    for (const segment of paths) {
-      currentPath += `/${segment}`
-      
-      // 在菜单中查找匹配的项
-      const findMenuTitle = (menus: MenuItem[]): string | undefined => {
-        for (const menu of menus) {
-          if (menu.path === currentPath) {
-            return menu.title
-          }
-          if (menu.children) {
-            const found = findMenuTitle(menu.children)
-            if (found) return found
+    breadcrumbs.push({ name: '首页', path: '/' })
+    
+    // 查找当前路由对应的菜单项
+    const findPath = (menuItems: MenuItem[], currentPath: string): boolean => {
+      for (const item of menuItems) {
+        if (item.path === currentPath) {
+          breadcrumbs.push({ name: item.name, path: item.path })
+          return true
+        }
+        
+        if (item.children) {
+          if (findPath(item.children, currentPath)) {
+            breadcrumbs.unshift({ name: item.name, path: item.path })
+            return true
           }
         }
-        return undefined
       }
-
-      const title = findMenuTitle(userStore.menus || []) || segment
-      crumbs.push({ path: currentPath, title })
+      
+      return false
     }
+    
+    findPath(userStore.menus, route.path)
+    
+    return breadcrumbs
+  }
 
-    return crumbs
-  })
+  const breadcrumbs = computed(() => generateBreadcrumbs())
 
   return {
     menus,

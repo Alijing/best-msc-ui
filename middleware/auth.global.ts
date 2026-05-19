@@ -1,40 +1,61 @@
-export default defineNuxtRouteMiddleware((to, from) => {
-  // 中间件仅用于辅助逻辑：已登录时访问登录页的重定向、保存未登录时的目标路径
-  // 未登录时的页面渲染控制由 app.vue 负责，避免闪烁和不必要的 API 调用
+/**
+ * 全局认证中间件
+ * 
+ * 职责：拦截所有路由访问，检查用户登录状态
+ * - 未登录用户自动重定向到登录页
+ * - 保存原始访问路径用于登录后回跳
+ * - 支持 SSR 和客户端双重检查
+ */
+
+import { parseCookies, sendRedirect } from 'h3'
+
+export default defineNuxtRouteMiddleware(async (to, _from) => {
+  // ==================== 白名单路由（不需要登录） ====================
+  const publicRoutes = ['/login', '/register']
   
-  if (import.meta.client) {
-    const token = useCookie('auth_token')
-    
-    // 检查是否已登录（同时检查 token 和 localStorage）
-    let isLoggedIn = !!token.value
-    
-    // 如果 cookie 中没有 token，检查 localStorage
-    if (!isLoggedIn) {
-      const loggedIn = localStorage.getItem('isLoggedIn')
-      const expireTime = localStorage.getItem('tokenExpireTime')
-      
-      if (loggedIn === 'true' && expireTime) {
-        const expireTimestamp = parseInt(expireTime, 10)
-        const now = Date.now()
-        isLoggedIn = now < expireTimestamp
-        
-        // 如果已过期，清除标记
-        if (!isLoggedIn) {
-          localStorage.removeItem('isLoggedIn')
-          localStorage.removeItem('tokenExpireTime')
-        }
-      }
-    }
-    
-    // 如果已登录且访问的是登录页，跳转到首页
-    if (isLoggedIn && to.path === '/login') {
+  // 如果当前路由在白名单中，直接放行
+  if (publicRoutes.includes(to.path)) {
+    // 已登录用户访问登录页/注册页，重定向到首页（防止重复登录）
+    if (import.meta.client && useState('isLoggedIn', () => false).value) {
+      console.log('⚠️ [middleware] 已登录用户访问登录页，重定向到首页')
       return navigateTo('/')
     }
-    
-    // 如果未登录且访问的不是登录页，保存目标路径（用于登录后跳转）
-    if (!isLoggedIn && to.path !== '/login') {
-      // 将完整路径（包含查询参数）保存到 sessionStorage
-      sessionStorage.setItem('redirectAfterLogin', to.fullPath)
-    }
+    return
   }
+  
+  // ==================== SSR 场景：服务端检查 ====================
+  // 在服务端渲染时，直接从 cookie 检查 token，避免客户端二次跳转
+  if (import.meta.server) {
+    const event = useRequestEvent()
+    const cookies = parseCookies(event)
+    
+    // 如果没有 token，服务端直接返回重定向（最高效）
+    if (!cookies.auth_token) {
+      console.log(`🔒 [middleware] SSR 检测到未登录，重定向到登录页：${to.fullPath}`)
+      return sendRedirect(event, `/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    }
+    
+    // 有 token，继续渲染页面
+    console.log('✅ [middleware] SSR 检测到已登录，继续渲染')
+    return
+  }
+  
+  // ==================== 客户端场景 ====================
+  // 在浏览器端，使用 useState 检查登录状态
+  const isLoggedIn = useState('isLoggedIn', () => false)
+  
+  // 未登录，跳转到登录页并保存目标路径
+  if (!isLoggedIn.value) {
+    console.log(`🔒 [middleware] 客户端检测到未登录，准备跳转：${to.fullPath}`)
+    
+    // 保存用户原本要访问的路径（用于登录后回跳）
+    useState('redirectPath', () => to.fullPath).value = to.fullPath
+    
+    // 跳转到登录页，带上 redirect 参数
+    return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+  }
+  
+  // 已登录，正常访问
+  console.log(`✅ [middleware] 客户端检测到已登录，允许访问：${to.fullPath}`)
+  return
 })

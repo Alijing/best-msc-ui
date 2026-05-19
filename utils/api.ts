@@ -7,16 +7,26 @@ import type { ApiResponse } from '~/types/api'
 
 /**
  * API 请求拦截器 - 在客户端发起请求前检查登录状态
- * 防止未登录时发送不必要的请求
+ * 
+ * 职责：防止未登录用户发送不必要的请求
+ * 
+ * 注意：
+ * - 只在客户端执行（服务端通过中间件控制）
+ * - 只检查 useState，不检查 HttpOnly Cookie（客户端读不到）
  */
-export function interceptApiRequest(url: string, options?: any): void {
-    // 只在客户端进行拦截检查
+export function interceptApiRequest(url: string, _options?: any): void {
+    // ==================== 只在客户端进行拦截检查 ====================
     if (typeof window === 'undefined') {
         return
     }
 
-    // 公开接口列表（不需要认证）
-    const publicPaths = ['/api/auth/login']
+    // 如果 url 为空，直接放行
+    if (!url) {
+        return
+    }
+
+    // ==================== 公开接口列表（不需要认证） ====================
+    const publicPaths = ['/api/auth/login', '/api/auth/register']
     const isPublicPath = publicPaths.some(path => url.includes(path))
 
     // 如果是公开接口，直接放行
@@ -24,39 +34,49 @@ export function interceptApiRequest(url: string, options?: any): void {
         return
     }
 
-    // 检查登录状态：同时检查 cookie 和 useState
-    const token = useCookie('auth_token')
-    const isLoggedInState = typeof useState !== 'undefined' ? useState('isLoggedIn').value : false
+    // ==================== 检查登录状态 ====================
+    // ✅ 只检查 useState，不检查 HttpOnly Cookie（客户端读不到）
+    const isLoggedInState = useState('isLoggedIn', () => false).value
     
-    // 如果 cookie 中存在 token 或者 state 为已登录，则放行
-    if (token.value || isLoggedInState) {
+    // 如果 state 为已登录，则放行
+    if (isLoggedInState) {
         return
     }
 
-    // 未登录且不是公开接口时，抛出错误阻止请求
+    // ==================== 未登录且不是公开接口，抛出错误阻止请求 ====================
     console.warn(`⚠️ 拦截未登录用户的 API 请求：${url}`)
     throw new Error('用户未登录，已拦截请求')
 }
 
 /**
  * 处理 API 响应，当 code !== 20000 时抛出错误
+ * 
+ * 特殊处理：
+ * - 401 错误：Token 过期或无效，自动跳转到登录页
+ * - 其他错误：直接抛出异常
  */
 export async function handleApiResponse<T>(response: ApiResponse<T>): Promise<ApiResponse<T>> {
     if (response.code !== 20000) {
         const errorMessage = response.message || '请求失败'
 
-        // 401 特殊处理：跳转到登录页
+        // ==================== 401 特殊处理：跳转到登录页 ====================
         if (response.code === 401) {
             if (typeof window !== 'undefined') {
-                // 清除本地状态
-                localStorage.removeItem('isLoggedIn')
-                localStorage.removeItem('tokenExpireTime')
+                console.log('🔒 [handleApiResponse] 检测到 401 错误，准备跳转登录页')
                 
-                // 使用 Nuxt 的 navigateTo 进行路由跳转（避免硬刷新）
-                await navigateTo('/login')
+                // ✅ 清除登录状态
+                useState('isLoggedIn', () => false).value = false
+                
+                // ✅ 保存当前路径用于回跳
+                const route = useRoute()
+                useState('redirectPath', () => '/').value = route.fullPath
+                
+                // ✅ 带 redirect 参数跳转
+                await navigateTo(`/login?redirect=${encodeURIComponent(route.fullPath)}`)
             }
         }
 
+        // 抛出错误，让调用方知道请求失败
         throw createError({
             status: response.code,
             message: errorMessage
@@ -81,12 +101,26 @@ export async function clientApiFetch<T>(url: string, options?: any): Promise<Api
         const response = await $fetch<ApiResponse<T>>(url, {
             ...options,
             credentials: 'include', // 自动携带 cookie
-            timeout: 5000, // 5 秒超时（快速失败）
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            },
+            timeout: 15000, // 15 秒超时
             retry: 0 // 不自动重试（由用户手动刷新）
         })
 
         return handleApiResponse(response)
     } catch (error: any) {
+        if(error.status === 404){
+            const toast = useToast()
+            toast.add({
+                title: '请求的资源不存在',
+                description: `${url}，请检查配置是否正确`,
+                color: 'error',
+                icon: 'i-heroicons-exclamation-circle'
+            })
+            return Promise.resolve(error)
+        }
         console.error(`API 请求失败 [${options?.method || 'GET'}] ${url}:`, error)
         throw error
     }
@@ -104,7 +138,11 @@ export async function apiFetch<T>(url: string, options?: any): Promise<ApiRespon
     try {
         const response = await $fetch<ApiResponse<T>>(url, {
             ...options,
-            timeout: 5000, // 5 秒超时（快速失败）
+            headers: {
+                'Content-Type': 'application/json',
+                ...options?.headers
+            },
+            timeout: 15000, // 15 秒超时
             retry: 0 // 不自动重试
         })
         return handleApiResponse(response)  // 只处理响应，不带 token
@@ -147,6 +185,7 @@ export async function serverApiFetch<T>(event: any, url: string, options?: any, 
 
     try {
         const headers = {
+            'Content-Type': 'application/json',
             ...(options?.headers || {}),
             // 直接传递 token（不带 Bearer 前缀）
             ...(token ? {'Authorization': `${token}`} : {})

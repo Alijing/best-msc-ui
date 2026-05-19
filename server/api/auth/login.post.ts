@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {defineApiEventHandler} from '../../utils/defineApiEventHandler'
+import {defineApiEventHandler} from '#server/utils/defineApiEventHandler'
 import {serverApiFetch} from '~/utils/api'
 
 // 登录请求验证 Schema
@@ -28,17 +28,23 @@ export default defineApiEventHandler({
           password
         }
       }, false) // 第三个参数为 false 表示不携带 token
+
       
-      // 从响应中获取 token 并设置 HttpOnly cookie
+      // ==================== 从响应中获取 token 并设置 HttpOnly cookie ====================
       if (response.data?.token) {
-        // 设置 HttpOnly cookie
+        console.log('🔐 [login] 准备设置 HttpOnly Cookie')
+        
+        // 设置 HttpOnly Cookie
         setCookie(event, 'auth_token', response.data.token, {
-          httpOnly: true,
-          secure: import.meta.env.PROD, // 生产环境使用 HTTPS
-          sameSite: 'strict', // 防止 CSRF
-          path: '/',
-          maxAge: response.data.expireTime || 7200 // 默认 2 小时
+          httpOnly: true,           // ✅ JavaScript 无法读取（防 XSS）
+          secure: import.meta.env.PROD, // ✅ 生产环境使用 HTTPS
+          sameSite: 'lax',          // ✅ 改为 lax（跨域开发环境兼容）
+                                      // strict 在跨域时会阻止 cookie 发送
+          path: '/',                // Cookie 路径
+          maxAge: response.data.expireTime || 7200 // 默认 2 小时（秒）
         })
+        
+        console.log('✅ [login] HttpOnly Cookie 已设置')
       }
       
       return response

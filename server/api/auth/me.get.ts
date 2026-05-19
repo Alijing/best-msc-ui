@@ -1,4 +1,4 @@
-import {defineApiEventHandler} from '../../utils/defineApiEventHandler'
+import {defineApiEventHandler} from '#server/utils/defineApiEventHandler'
 import {serverApiFetch} from '~/utils/api'
 
 /**
