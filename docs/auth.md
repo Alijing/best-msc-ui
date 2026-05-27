@@ -1,6 +1,6 @@
 # 全局鉴权
 
-> 完整历史方案（含大量代码示例）见 [archive/AUTH_SCHEME.full.md](./archive/AUTH_SCHEME.full.md)。
+> 实现细节以仓库内 `middleware/`、`utils/api.ts`、`stores/user.store.ts`、`server/api/auth/` 为准。历史长文可从 Git `cebb570` 的 `docs/archive/AUTH_SCHEME.full.md` 查看。
 
 ---
 

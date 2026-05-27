@@ -158,5 +158,4 @@ Nuxt UI 与图标自动导入；上述目录**勿手动 import**（类型除外�
 - [开发规范索引](./conventions.md)
 - [鉴权说明](./auth.md)
 - [环境 FAQ](./environment.md)
-- [文档整理方案](../文档整理方案.md)
 - [文档维护](./MAINTENANCE.md)

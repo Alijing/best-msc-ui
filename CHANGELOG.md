@@ -1,6 +1,6 @@
 # Changelog
 
-本文件记录**产品/代码**对用户或开发者可见的变更。文档体系的历史变更见 [docs/archive/CHANGELOG_DOCS.md](./docs/archive/CHANGELOG_DOCS.md)。
+本文件记录**产品/代码**对用户或开发者可见的变更。文档体系重组前的历史记录见 Git 提交 `cebb570` 及更早历史。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
@@ -13,6 +13,8 @@
 ### Fixed
 
 ### Removed
+
+- 移除 `docs/archive/` 与根目录 `文档整理方案.md`（备查内容保留在 Git `cebb570`）
 
 ---
 
@@ -27,6 +29,6 @@
 
 ### Changed
 
-- 文档从根目录多文件整理为 `docs/` 结构；历史全文归档至 `docs/archive/`
+- 文档从根目录多文件整理为 `docs/` 结构
 
 <!-- 发布版本后在此补充 Compare / Release 链接 -->

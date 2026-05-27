@@ -18,7 +18,7 @@
 
 ## 文档（按需勾选）
 
-> 单一事实来源见 [文档整理方案](../文档整理方案.md#六单一事实来源ssot)。
+> 单一事实来源见 [docs/MAINTENANCE.md](../docs/MAINTENANCE.md#单一事实来源ssot)。
 
 - [ ] **无需更新文档**（仅内部重构、样式微调等）
 - [ ] 已更新 [docs/architecture.md](../docs/architecture.md)（新增/删除页面、Store、API 路由、模块目录）
