@@ -56,7 +56,7 @@
 - [x] 添加详细注释
 - [x] 优化日志输出
 
-#### 8. components/LoginForm.vue
+#### 8. modules/components/auth/LoginForm.vue
 - [x] redirectPath 计算属性
 - [x] 重定向路径验证（防开放重定向）
 - [x] 登录成功后跳转逻辑

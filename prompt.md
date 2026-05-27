@@ -4,7 +4,7 @@
 
 ### 1. `tech-stack-and-env.md`
 
-```markdown
+````markdown
 ---
 trigger: always_on
 description: 技术栈、包管理器、Node 版本、runtimeConfig 环境变量配置
@@ -13,6 +13,7 @@ description: 技术栈、包管理器、Node 版本、runtimeConfig 环境变量
 # 技术栈与环境配置
 
 ## 技术栈
+
 - 元框架：Nuxt 4.4.2（SSR: true）
 - UI 组件库：Nuxt UI v4.6.0
 - 图标库：`@nuxt/icon` + `@iconify-json/heroicons`、`@iconify-json/lucide`
@@ -23,14 +24,20 @@ description: 技术栈、包管理器、Node 版本、runtimeConfig 环境变量
 - 包管理器：pnpm 9.11.0，Node.js >=22.x
 
 ## 环境变量与 runtimeConfig
+
 ```ts
 runtimeConfig: {
-  public: { backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://localhost:8080' }
+  public: {
+    backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  }
 }
 ```
+````
+
 - 客户端可用变量以 `NUXT_PUBLIC_` 开头
 - 服务端私有变量使用 `NUXT_`
-```
+
+````
 
 ---
 
@@ -44,34 +51,37 @@ description: 完整目录结构及各目录职责
 
 # 目录结构
 
-```
+````
+
 .
 ├── app.vue
 ├── nuxt.config.ts
-├── pages/               # 路由页面，只做组装，无业务逻辑
-├── layouts/             # 布局组件（default.vue, guest.vue）
-├── components/          # 全局共享组件（自动导入）
-├── composables/         # 组合式函数（自动导入，以 use 开头）
-├── stores/              # Pinia store（自动导入，[name].store.ts）
-│   └── types/           # 共享 TypeScript 类型
-├── modules/             # 业务模块内聚
-│   └── components/      # 模块组件（自动导入，modules/components/[module]/[Component].vue）
-├── server/api/          # Nitro API 路由（[name].[method].ts）
-├── server/utils/        # 服务端工具（defineApiEventHandler 等）
-├── middleware/          # 路由中间件（auth.global.ts）
-├── plugins/             # Nuxt 插件（按需）
-├── utils/               # 纯工具函数（自动导入）
-├── assets/css/          # 全局样式
-├── public/              # 静态资源
-└── types/               # 全局类型定义（如 api.d.ts）
+├── pages/ # 路由页面，只做组装，无业务逻辑
+├── layouts/ # 布局组件（default.vue, guest.vue）
+├── components/ # 全局共享组件（自动导入）
+├── composables/ # 组合式函数（自动导入，以 use 开头）
+├── stores/ # Pinia store（自动导入，[name].store.ts）
+│ └── types/ # 共享 TypeScript 类型
+├── modules/ # 业务模块内聚
+│ └── components/ # 模块组件（自动导入，modules/components/[module]/[Component].vue）
+├── server/api/ # Nitro API 路由（[name].[method].ts）
+├── server/utils/ # 服务端工具（defineApiEventHandler 等）
+├── middleware/ # 路由中间件（auth.global.ts）
+├── plugins/ # Nuxt 插件（按需）
+├── utils/ # 纯工具函数（自动导入）
+├── assets/css/ # 全局样式
+├── public/ # 静态资源
+└── types/ # 全局类型定义（如 api.d.ts）
+
 ```
+
 ```
 
 ---
 
 ### 3. `naming-and-code-style.md`
 
-```markdown
+````markdown
 ---
 trigger: always_on
 description: 命名规范、Vue SFC 结构、script setup 顺序、自动导入规则
@@ -80,12 +90,14 @@ description: 命名规范、Vue SFC 结构、script setup 顺序、自动导入�
 # 命名与代码风格
 
 ## 命名规范
+
 - 组件名：`PascalCase`（如 `LoginForm.vue`）
 - 组合式函数：`useXxx`（如 `useMenu.ts`）
 - Pinia store：`useXxxStore`（如 `useUserStore`）
 - 目录名：`kebab-case`（如 `user-profile/`）
 
 ## Vue SFC 结构顺序
+
 ```vue
 <script setup lang="ts">
 // 1. 类型导入（自动导入优先）
@@ -103,12 +115,15 @@ description: 命名规范、Vue SFC 结构、script setup 顺序、自动导入�
 /* 尽量少用 */
 </style>
 ```
+````
 
 ## 自动导入规则
+
 - `components/` 根目录及 `modules/components/[module]/` 下的组件自动导入
 - `composables/`、`stores/`、`utils/` 下的文件自动导入，**禁止手动 import**
 - 配置变更需重启开发服务器
-```
+
+````
 
 ---
 
@@ -141,14 +156,14 @@ description: Nuxt UI 组件使用规范（自动导入、图标、暗色模式�
 
 ## 表格
 - 简单列表：`UTable`
-- 复杂功能（树形、合并单元格）：临时使用 `<ClientOnly>` 包裹旧 Element Plus 表格
-```
+- 复杂功能（树形、合并单元格）：使用 Nuxt UI 表格组件或自定义实现
+````
 
 ---
 
 ### 5. `pinia-store.md`
 
-```markdown
+````markdown
 ---
 trigger: always_on
 description: Pinia 状态管理规范（文件命名、defineStore 写法、已存在 store 列表）
@@ -157,26 +172,32 @@ description: Pinia 状态管理规范（文件命名、defineStore 写法、已�
 # Pinia 状态管理规范
 
 ## 文件命名
+
 `[name].store.ts`（如 `user.store.ts`）
 
 ## 定义方式
+
 使用 `defineStore` + Composition API 风格。
 
 ## 示例
+
 ```ts
-export const useUserStore = defineStore('user', () => {
-  const user = ref<User | null>(null)
+export const useUserStore = defineStore("user", () => {
+  const user = ref<User | null>(null);
   async function fetchUserInfo() {
-    const data = await $fetch('/api/auth/me')
-    user.value = data.user
+    const data = await $fetch("/api/auth/me");
+    user.value = data.user;
   }
-  return { user, fetchUserInfo }
-})
+  return { user, fetchUserInfo };
+});
 ```
+````
 
 ## 已存在的 stores
+
 - `user`、`app`、`menu`、`role`、`user-manage`、`tasteVideo`
-```
+
+````
 
 ---
 
@@ -219,20 +240,23 @@ export default defineApiEventHandler({
     return await serverApiFetch(event, '/backend/path', { method: 'GET', query: payload })
   }
 })
-```
+````
 
 ## 统一响应格式
+
 ```ts
 interface ApiResponse<T = any> {
-  code: number      // 20000 成功
-  data: T
-  message: string
-  success: boolean
-  total?: number
+  code: number; // 20000 成功
+  data: T;
+  message: string;
+  success: boolean;
+  total?: number;
 }
 ```
+
 - 错误处理：客户端 `try/catch` + `useToast()`，服务端自动捕获
-```
+
+````
 
 ---
 
@@ -262,7 +286,7 @@ description: TypeScript 类型定义、ID 联合类型、Zod 派生、共享类�
 ## 注意
 - 禁止使用 `any`，除非有明确理由。
 - 优先使用自动导入的类型，无需手动 import。
-```
+````
 
 ---
 
@@ -277,17 +301,20 @@ description: 路由守卫、权限函数、性能优化、SSR 注意事项
 # 路由、权限、性能与 SSR
 
 ## 路由与权限
+
 - 全局守卫：`middleware/auth.global.ts` 自动应用到所有路由
 - 权限判断：从 `useUserStore().permissions` 获取，封装 `can(permission)` 函数
 - 路由跳转：使用 `navigateTo` 或 `useRouter()`
 
 ## 性能优化
+
 - 大列表使用分页（`UPagination`）或虚拟滚动
 - 图片使用 `<NuxtImg>` 组件（懒加载、优化）
 - 避免模板中复杂计算，优先 `computed`
 - 路由懒加载由 Nuxt 自动处理
 
 ## SSR 注意事项
+
 - Nuxt UI 已原生支持 SSR
 - 访问 `window`/`document` 需在 `onMounted` 或 `import.meta.client` 中
 - 生产环境关闭 `devtools`，移除调试代码
@@ -306,18 +333,22 @@ description: 安全规范、代码质量检查、Git 提交规范
 # 安全与代码质量
 
 ## 安全规范（必须遵守）
+
 - **禁止 `v-html`**：除非内容经过 DOMPurify 清洗
 - **用户输入**：服务端必须使用 Zod 校验，客户端可选
 - **Cookie**：设置 `httpOnly`、`secure`、`sameSite: 'strict'`
 - **CSRF**：若使用 cookie 认证，敏感接口需验证 token
 
 ## 代码质量检查
+
 - ESLint：`pnpm lint` / `pnpm lint:fix`
 - 类型检查：`pnpm type-check`
 - 生产构建：自动移除 `console.log` 和 `debugger`（Vite 配置）
 
 ## Git 提交规范（推荐）
+
 使用 Conventional Commits：
+
 - `feat:` 新功能
 - `fix:` 修复 bug
 - `docs:` 文档
@@ -341,11 +372,13 @@ description: Google Fonts 和 Nuxt DevTools 配置（手动触发）
 # 可选工具配置
 
 ## Google Fonts
+
 - 已集成 `@nuxtjs/google-fonts`
 - 配置下载 **Inter** 和 **Noto Sans SC** 到本地
 - 通过 Tailwind 的 `font-sans` 使用
 
 ## Nuxt DevTools
+
 - 开发环境启用：`devtools: { enabled: true }`
 - 生产环境关闭
 ```

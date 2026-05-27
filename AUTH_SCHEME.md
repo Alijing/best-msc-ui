@@ -95,7 +95,7 @@ const currentLayout = computed(() => {
 2. `app.vue` - Layout 切换
 3. `middleware/auth.global.ts` - 鉴权中间件
 4. `utils/api.ts` - API 响应处理
-5. `components/LoginForm.vue` - 登录表单
+5. `modules/components/auth/LoginForm.vue` - 登录表单
 
 **全部使用公共常量**:
 - `PUBLIC_ROUTES` - 公开页面列表

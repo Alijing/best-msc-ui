@@ -8,7 +8,7 @@
 
 ## 📋 项目概览
 
-Best MSC UI 是一个基于 Nuxt 4 的现代化管理后台系统，采用前后端一体化架构设计。项目已完成从 Element Plus 到 Nuxt UI 的迁移，支持 SSR（服务端渲染），具有良好的可维护性和可扩展性。
+Best MSC UI 是一个基于 Nuxt 4 的现代化管理后台系统，采用前后端一体化架构设计，支持 SSR（服务端渲染），具有良好的可维护性和可扩展性。
 
 ### 核心技术栈
 
@@ -61,7 +61,6 @@ best_msc_ui/
 │   ├── default.vue             # 默认布局（左侧菜单 + 顶栏）
 │   └── guest.vue               # 访客布局（无菜单，用于登录页）
 ├── components/                 # 全局共享组件（自动导入）
-│   ├── LoginForm.vue           # 登录表单
 │   ├── TopBar.vue              # 顶部栏（面包屑、通知、全屏、用户下拉）
 │   ├── UserDropdown.vue        # 用户下拉菜单
 │   ├── NotificationDropdown.vue # 通知中心
@@ -82,6 +81,8 @@ best_msc_ui/
 │   ├── role.store.ts           # 角色管理 CRUD
 │   └── tasteVideo.store.ts     # 兴趣视频管理 CRUD
 ├── modules/components/         # 业务模块组件（自动导入）
+│   ├── auth/                   # 认证模块
+│   │   └── LoginForm.vue               # 登录表单
 │   ├── performer/              # 演员字典模块
 │   │   ├── PerformerList.vue           # 演员列表组件
 │   │   └── PerformerFormDialog.vue     # 演员表单弹窗
@@ -158,6 +159,7 @@ best_msc_ui/
 
 **位置**: 
 - 页面：`pages/login.vue`
+- 组件：`modules/components/auth/LoginForm.vue`
 - Store: `stores/user.store.ts`
 - 中间件：`middleware/auth.global.ts`
 - 插件：`plugins/init-auth.client.ts`
@@ -579,8 +581,8 @@ pnpm preview     # 预览生产构建
 | 类型 | 数量 | 说明 |
 |------|------|------|
 | **页面** | 6 | index (首页/仪表盘), login, dashboard/index, video/performer/index, video/taste/index, system/role/index |
-| **全局组件** | 5 | LoginForm, TopBar, UserDropdown, NotificationDropdown, ConfirmDialog |
-| **模块组件** | 7 | PerformerList, PerformerFormDialog, RoleList, RoleFormDialog, TasteVideoList, TasteVideoFormDialog, TasteVideoPreviewDialog |
+| **全局组件** | 4 | TopBar, UserDropdown, NotificationDropdown, ConfirmDialog |
+| **模块组件** | 8 | LoginForm, PerformerList, PerformerFormDialog, RoleList, RoleFormDialog, TasteVideoList, TasteVideoFormDialog, TasteVideoPreviewDialog |
 | **Stores** | 5 | user, app, performer, role, tasteVideo |
 | **Composables** | 1 | useMenu |
 | **API 接口** | ~25 | 认证(3) + 演员字典(6) + 兴趣视频(8+) + 角色管理(5+) |
