@@ -8,21 +8,9 @@
 
     <UMain>
       <div class="menu-container">
-        <MenuTree
-          ref="menuTreeRef"
-          @add="handleAdd"
-          @edit="handleEdit"
-          @delete="handleDelete"
-        />
+        <MenuTree ref="menuTreeRef" @delete="handleDelete" />
       </div>
     </UMain>
-
-    <!-- TODO: 暂时注释，先实现菜单树展示 -->
-    <!-- <MenuFormDialog
-      v-model="showFormDialog"
-      :node="selectedNode"
-      @submit="handleFormSubmit"
-    /> -->
   </div>
 </template>
 
@@ -30,33 +18,22 @@
 import { ref } from "vue";
 import ConfirmDialog from "~/components/ConfirmDialog.vue";
 import type { MenuNode } from "~/stores/types/menu";
+import { useMenuStore } from "~/stores/menu.store";
 
-const toast = useToast();
 const menuStore = useMenuStore();
 const overlay = useOverlay();
 
-// 菜单树引用
-const menuTreeRef = ref();
-
-// 显示表单对话框
-const showFormDialog = ref(false);
-
-// 当前选中的菜单节点
-const selectedNode = ref<MenuNode | null>(null);
-
-// 处理新增菜单
-function handleAdd(node?: MenuNode) {
-  selectedNode.value = node || null;
-  showFormDialog.value = true;
+interface MenuTreeExpose {
+  loadMenuTree: () => Promise<void>;
+  openAddDialog: (parentMenu?: MenuNode) => void;
 }
 
-// 处理编辑菜单
-function handleEdit(node: MenuNode) {
-  selectedNode.value = node;
-  showFormDialog.value = true;
+const menuTreeRef = ref<MenuTreeExpose | null>(null);
+
+function handleAdd() {
+  menuTreeRef.value?.openAddDialog();
 }
 
-// 处理删除菜单
 async function handleDelete(node: MenuNode) {
   const confirmDialog = overlay.create(ConfirmDialog, {
     destroyOnClose: true,
@@ -70,25 +47,10 @@ async function handleDelete(node: MenuNode) {
 
   if (confirmed) {
     const success = await menuStore.deleteMenu(node.id);
-    if (success && menuTreeRef.value) {
-      await menuTreeRef.value.loadMenuTree();
+    if (success) {
+      await menuTreeRef.value?.loadMenuTree();
     }
   }
-}
-
-// 处理表单提交
-async function handleFormSubmit() {
-  // 刷新菜单树
-  if (menuTreeRef.value) {
-    await menuTreeRef.value.loadMenuTree();
-  }
-
-  // 显示成功提示
-  toast.add({
-    title: "成功",
-    description: "菜单操作成功",
-    color: "success",
-  });
 }
 </script>
 

@@ -1,0 +1,51 @@
+---
+description: 技术栈、目录结构、命名与自动导入（项目基础约定）
+alwaysApply: true
+---
+
+# 项目基础
+
+## 技术栈
+
+- 主栈：Nuxt 4（SSR）、Vue 3、Nuxt UI 4、Pinia 3、TypeScript、Zod
+- **精确版本以根目录 `package.json` / `pnpm-lock.yaml` 为准**，勿在规则中写死补丁号
+- 运行时：Node.js、`engines.node`；包管理 `packageManager`（pnpm）
+- 数据获取：`useFetch` / `$fetch`；复杂缓存可用 `@tanstack/vue-query`
+- 图标：`@nuxt/icon`，前缀 `i-heroicons-*`、`i-lucide-*`
+
+## 环境变量
+
+- 客户端：`NUXT_PUBLIC_*`；服务端私有：`NUXT_*`
+- `runtimeConfig.public.backendUrl` 默认 `http://localhost:8080`
+
+## 目录职责
+
+```
+pages/                 # 路由页面，只做组装
+layouts/               # default.vue, guest.vue
+components/            # 全局共享组件（自动导入）
+modules/components/    # 业务模块组件，如 auth/LoginForm.vue
+composables/           # useXxx，自动导入
+stores/ + stores/types/
+server/api/            # [name].[method].ts
+server/utils/          # defineApiEventHandler 等
+middleware/            # auth.global.ts
+utils/                 # api.ts 等
+types/                 # api.d.ts 等全局类型
+```
+
+## 命名
+
+- 组件 `PascalCase`；组合式函数 `useXxx`；Store `useXxxStore`；目录 `kebab-case`
+- Store 文件：`[name].store.ts`；API 路由：`[name].[method].ts`
+
+## 自动导入
+
+- `components/`、`modules/components/`、`composables/`、`stores/`、`utils/` **禁止手动 import**（类型 import 除外）
+- 修改 `nuxt.config` 组件路径后需重启 dev server
+
+## Vue SFC 顺序
+
+`script setup` → `template`（优先 Nuxt UI + Tailwind）→ `style scoped`（尽量少用）
+
+script 内顺序：类型 → props/emits → composables → 响应式 → computed → 方法 → 生命周期

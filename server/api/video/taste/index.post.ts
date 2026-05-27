@@ -8,7 +8,7 @@ import { serverApiFetch } from '~/utils/api'
 const bodySchema = z.object({
   number: z.string(),
   name: z.string(),
-  performer: z.union([z.string(), z.number()]),
+  performer: z.array(z.union([z.string(), z.number()])),
   releaseDate: z.string(),
   rating: z.number().min(1).max(5),
   status: z.number().min(0).max(2),

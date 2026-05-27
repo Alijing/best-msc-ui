@@ -1,0 +1,47 @@
+---
+description: Nitro API 路由、RESTful 约定、defineApiEventHandler 与统一响应
+globs: server/**/*
+alwaysApply: false
+---
+
+# 服务端 API
+
+## RESTful 文件命名
+
+| 文件 | 路径 |
+|------|------|
+| `index.get.ts` | GET 列表 |
+| `[id].get.ts` | GET 详情 |
+| `index.post.ts` | POST 创建 |
+| `index.put.ts` | PUT 更新（body 含 id） |
+| `index.delete.ts` | DELETE（body 含 ids） |
+| `[action].get.ts` | 特殊操作 |
+
+## 统一响应
+
+`ApiResponse<T>`：`code === 20000` 为成功；列表可带 `total`。
+
+## Handler 模板
+
+```ts
+import { z } from 'zod'
+import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
+import { serverApiFetch } from '~/utils/api'
+
+const querySchema = z.object({ pageIndex: z.coerce.number().default(1) })
+
+export default defineApiEventHandler({
+  validation: querySchema,
+  handler: async (event, payload) => {
+    return await serverApiFetch<ApiResponse<T>>(event, '/backend/path', {
+      method: 'GET',
+      query: payload
+    })
+  }
+})
+```
+
+## 校验与安全
+
+- 用户输入必须用 Zod 校验
+- 禁止 `any`；ID 用 `string | number`，精度敏感用 `String(id)`

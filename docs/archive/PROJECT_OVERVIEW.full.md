@@ -639,7 +639,8 @@ pnpm preview     # 预览生产构建
 
 - [开发规范文档](./开发规范文档.md) - 详细的开发规范和 AI 提示词
 - [AUTH_SCHEME.md](./AUTH_SCHEME.md) - 全局鉴权与 Token 存储完整方案
-- [ENVIRONMENT.md](./ENVIRONMENT.md) - 环境配置说明
+- [README.md](./README.md) - 环境要求与快速开始
+- [docs/environment.md](./docs/environment.md) - 环境排错 FAQ
 - [REQUIREMENTS.md](./REQUIREMENTS.md) - 需求规格说明书
 - [Nuxt 4 文档](https://nuxt.com/)
 - [Vue 3 文档](https://vuejs.org/)

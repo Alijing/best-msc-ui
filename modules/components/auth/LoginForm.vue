@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useUserStore } from '~/stores/user.store'
-
 const userStore = useUserStore()
 const formRef = ref()
 const loading = ref(false)
@@ -29,20 +27,20 @@ const route = useRoute()
 const redirectPath = computed(() => {
   const queryRedirect = route.query.redirect as string
   const savedRedirect = useState('redirectPath', () => '/').value
-  
+
   // 验证重定向路径是否合法（防止开放重定向漏洞）
   const isValidRedirect = (path: string) => {
     return path && path.startsWith('/') && !path.startsWith('//')
   }
-  
-  return isValidRedirect(queryRedirect) ? queryRedirect : 
-         isValidRedirect(savedRedirect) ? savedRedirect : 
+
+  return isValidRedirect(queryRedirect) ? queryRedirect :
+         isValidRedirect(savedRedirect) ? savedRedirect :
          '/'
 })
 
 /**
  * 提交登录表单
- * 
+ *
  * 流程：
  * 1. 表单验证
  * 2. 调用登录接口
@@ -54,23 +52,23 @@ async function handleSubmit(event?: Event) {
   if (event) {
     event.preventDefault()
   }
-  
+
   if (!formRef.value) return
 
   try {
     // ==================== 表单验证 ====================
     await formRef.value.validate()
-    
+
     console.log('✅ [login] 表单验证通过，开始登录...')
     loading.value = true
 
     try {
       // ==================== 调用登录接口 ====================
       await userStore.login(formData.value)
-      
+
       // ==================== 清除保存的重定向路径 ====================
       useState('redirectPath').value = null
-      
+
       // ==================== 跳转到目标页面 ====================
       console.log(`🚀 [login] 登录成功，准备跳转到：${redirectPath.value}`)
       await navigateTo(redirectPath.value)

@@ -3,7 +3,7 @@
  */
 import {defineStore} from 'pinia'
 import {useDebounceFn} from '@vueuse/core'
-import type {ApiResponse} from '~/types/api'
+import type {ApiResponse,DictItem} from '~/types/api'
 import type {TasteVideo, TasteVideoQuery, TasteVideoRequest} from '~/stores/types/tasteVideo'
 
 export interface TasteVideoState {
@@ -11,7 +11,7 @@ export interface TasteVideoState {
     total: number
     loading: boolean
     query: TasteVideoQuery
-    performerDict: PerformerDictItem[]
+    performerDict: DictItem[]
     // 车牌号验证状态
     numberValidating: boolean
     numberError: string
@@ -80,8 +80,8 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
             })
 
             if (response.code === 20000) {
-                state.value.list = response.data
-                state.value.total = response.total
+                state.value.list = (response.data as unknown as TasteVideo[]) || []
+                state.value.total = response.total ?? 0
             }
         } catch (error) {
             console.error('[TasteVideoStore] 获取视频列表失败:', error)
@@ -101,7 +101,7 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
         })
 
         if (response.code === 20000) {
-            return response.data
+            return response.data as unknown as TasteVideoRequest
         }
         return null
     }
@@ -170,8 +170,8 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
         })
 
         if (response.code === 20000) {
-            state.value.performerDict = response.data
-            cached.value = response.data
+            state.value.performerDict = (response.data as unknown as DictItem[]) || []
+            cached.value = state.value.performerDict
         }
         return response.data
     }
@@ -194,7 +194,7 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
     /**
      * 验证车牌号
      */
-    async function validateNumber(number: string, excludeId?: number) {
+    async function validateNumber(number: string, excludeId?: number | string) {
         // 清空之前的错误
         state.value.numberError = ''
         
@@ -228,14 +228,14 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
     }
 
     // 创建防抖函数（只创建一次）
-    const debouncedValidateNumber = useDebounceFn((number: string, excludeId?: number) => {
+    const debouncedValidateNumber = useDebounceFn((number: string, excludeId?: number | string) => {
         void validateNumber(number, excludeId)
     }, 500)
 
     /**
      * 失焦时验证车牌号（带防抖）
      */
-    function validateNumberOnBlur(number: string, excludeId?: number) {
+    function validateNumberOnBlur(number: string, excludeId?: number | string) {
         void debouncedValidateNumber(number, excludeId)
     }
 
@@ -258,16 +258,16 @@ export const useTasteVideoStore = defineStore('tasteVideo', () => {
             console.log('[TasteVideoStore] 获取预览图片:', response)
             
             if (response.code === 20000) {
-                state.value.previewImages = response.data.filter(img => img)
+                state.value.previewImages = (response.data as unknown as string[]).filter(img => img)
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('[TasteVideoStore] 获取预览图片失败:', error)
             state.value.previewImages = []
             // ✅ 在这里弹出 toast
             const toast = useToast()
             toast.add({
                 title: '加载失败',
-                description: error.message || '获取预览图片失败',
+                description: (error as Error).message || '获取预览图片失败',
                 color: 'error',
                 icon: 'i-heroicons-exclamation-circle'
             })

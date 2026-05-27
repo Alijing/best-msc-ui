@@ -1,0 +1,16 @@
+---
+description: 客户端 API 调用方式（useFetch / $fetch / clientApiFetch）
+globs: "{pages/**,modules/**,composables/**,utils/api.ts}"
+alwaysApply: false
+---
+
+# 客户端数据获取
+
+- 页面初始数据、SSR 友好：优先 `useFetch`
+- 用户交互、Store 内请求：`$fetch` 或 `clientApiFetch`
+- 错误：`try/catch` + `useToast()`；401 由 `handleApiResponse` 统一处理
+
+## 可选工具
+
+- Google Fonts：Inter + Noto Sans SC（`@nuxtjs/google-fonts`，本地缓存）
+- DevTools：仅开发环境 `devtools.enabled: true`

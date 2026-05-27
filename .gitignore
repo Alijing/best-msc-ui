@@ -18,9 +18,11 @@ node_modules/
 *.swo
 *~
 
-# Lingma AI (保留 rules 目录)
+# Lingma AI（已弃用，整目录忽略）
 .lingma/
-!.lingma/rules/
+
+# Trae 规则（已迁移至 .cursor/rules）
+.trae/
 
 # 操作系统
 .DS_Store
@@ -46,6 +48,4 @@ coverage/
 *.temp
 .cache/
 
-# 文档（可选，根据团队规范决定是否提交）
-# CHANGELOG_DOCS.md
-# SUMMARY_REPORT.md
+# 历史文档已移至 docs/archive/ 并纳入版本管理

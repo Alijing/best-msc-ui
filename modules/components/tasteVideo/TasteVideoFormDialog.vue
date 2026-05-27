@@ -1,189 +1,215 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type {FormSubmitEvent} from '@nuxt/ui'
-import {CalendarDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
+import * as z from "zod";
+import type { FormSubmitEvent } from "@nuxt/ui";
+import {
+  CalendarDate,
+  DateFormatter,
+  getLocalTimeZone,
+} from "@internationalized/date";
+import type { TasteVideoRequest } from "@/stores/types/tasteVideo";
 
-const store = useTasteVideoStore()
+const store = useTasteVideoStore();
 
 // ✅ 使用 defineModel 实现双向绑定
-const open = defineModel<boolean>('open', {default: false})
+const open = defineModel<boolean>("open", { default: false });
 
-const props = withDefaults(defineProps<{
-  videoId?: string | number | null
-  performerDict: Array<{ id: string | number; name: string }>
-}>(), {
-  videoId: null
-})
+const props = withDefaults(
+  defineProps<{
+    videoId?: string | number;
+    performerDict: Array<{ id: string | number; name: string }>;
+  }>(),
+  {
+    videoId: undefined,
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'success'): void
-  (e: 'update:open', value: boolean): void
-}>()
+  (e: "success"): void;
+  (e: "update:open", value: boolean): void;
+}>();
 
 // ✅ 计算属性优化
 const performerOptions = computed(() =>
-    props.performerDict.map(item => ({label: item.name, value: String(item.id)}))
-)
+  props.performerDict.map((item) => ({
+    label: item.name,
+    value: String(item.id),
+  })),
+);
 
-const title = computed(() => props.videoId ? '编辑兴趣视频' : '新增兴趣视频')
+const title = computed(() => (props.videoId ? "编辑兴趣视频" : "新增兴趣视频"));
 
 // ✅ 定义 Zod schema
 const schema = z.object({
-  number: z.string().min(1, '请输入车牌号'),
-  name: z.string().min(1, '请输入视频名称'),
-  performer: z.union([z.string(), z.number()]).nullable().optional().refine(val => val != null && val !== '', '请选择演员'),
-  releaseDate: z.string().min(1, '请选择发行时间'),
+  number: z.string().min(1, "请输入车牌号"),
+  name: z.string().min(1, "请输入视频名称"),
+  performer: z
+    .array(z.union([z.string(), z.number()]))
+    .nonempty("请至少选择一个演员"),
+  releaseDate: z.string().min(1, "请选择发行时间"),
   rating: z.number().min(0).max(5),
   status: z.number(),
-  magnetUri: z.string().min(1, '请输入磁力链接')
-})
+  magnetUri: z.string().min(1, "请输入磁力链接"),
+});
 
-type Schema = z.output<typeof schema>
+type Schema = z.output<typeof schema>;
 
-const state = reactive<Schema>({
-  number: '',
-  name: '',
-  performer: null as string | number | null,
-  releaseDate: '',
+const state = reactive<TasteVideoRequest>({
+  number: "",
+  name: "",
+  performer: [] as string[],
+  releaseDate: "",
   rating: 5,
   status: 0,
-  magnetUri: ''
-})
+  magnetUri: "",
+});
 
 // 日期选择器引用
-const selectedDate = shallowRef<CalendarDate | null>(null)
+const selectedDate = shallowRef<CalendarDate | null>(null);
 
 // 日期格式化
-const df = new DateFormatter('zh-CN', {
-  dateStyle: 'medium'
-})
+const df = new DateFormatter("zh-CN", {
+  dateStyle: "medium",
+});
 
-const loading = ref(false)
+const loading = ref(false);
 
 // ✅ 监听 open 变化，初始化表单
-watch(open, async (newVal) => {
-  if (newVal) {
-    // 重置表单
-    state.number = ''
-    state.name = ''
-    state.performer = null
-    state.releaseDate = ''
-    state.rating = 5
-    state.status = 0
-    state.magnetUri = ''
-    selectedDate.value = null
-    store.clearNumberError()
+watch(
+  open,
+  async (newVal) => {
+    if (newVal) {
+      // 重置表单
+      state.number = "";
+      state.name = "";
+      state.performer = [] as string[];
+      state.releaseDate = "";
+      state.rating = 5;
+      state.status = 0;
+      state.magnetUri = "";
+      selectedDate.value = null;
+      store.clearNumberError();
 
-    // 如果是编辑模式，获取详细数据
-    if (props.videoId) {
-      const video = await store.fetchVideoById(props.videoId)
-      if (video) {
-        state.number = video.number
-        state.name = video.name
-        state.performer = video.performer != null ? String(video.performer) : null
-        state.releaseDate = video.releaseDate
-        state.rating = video.rating
-        state.status = video.status
-        state.magnetUri = video.magnetUri
+      // 如果是编辑模式，获取详细数据
+      if (props.videoId) {
+        const video = await store.fetchVideoById(props.videoId);
+        if (video) {
+          state.number = video.number;
+          state.name = video.name;
+          state.performer = Array.isArray(video.performer)
+            ? video.performer.map(String)
+            : [String(video.performer)];
+          state.releaseDate = video.releaseDate;
+          state.rating = video.rating;
+          state.status = video.status;
+          state.magnetUri = video.magnetUri;
 
-        // 初始化日期选择器
-        if (video.releaseDate) {
-          const [year, month, day] = video.releaseDate.split('-').map(Number)
-          selectedDate.value = new CalendarDate(year, month, day)
+          // 初始化日期选择器
+          if (video.releaseDate) {
+            const [year, month, day] = video.releaseDate.split("-").map(Number);
+
+            selectedDate.value = new CalendarDate(
+              year ?? 0,
+              month ?? 0,
+              day ?? 0,
+            );
+          }
         }
       }
     }
-  }
-}, {immediate: true})
+  },
+  { immediate: true },
+);
 
 // ✅ 处理日期选择
 function handleDateSelect(date: CalendarDate | null) {
-  selectedDate.value = date
+  selectedDate.value = date;
   if (date) {
-    state.releaseDate = date.toString()
+    state.releaseDate = date.toString();
   } else {
-    state.releaseDate = ''
+    state.releaseDate = "";
   }
 }
 
 // ✅ 车牌号失焦验证
 function handleNumberBlur() {
   if (!state.number || props.videoId) {
-    store.clearNumberError()
-    return
+    store.clearNumberError();
+    return;
   }
-  store.validateNumberOnBlur(state.number, props.videoId)
+  store.validateNumberOnBlur(state.number, props.videoId);
 }
 
 // ✅ 手动提交表单
-const formRef = ref()
+const formRef = ref();
 
 async function handleSubmit() {
   // 手动触发表单验证
   if (formRef.value) {
-    await formRef.value.submit()
+    await formRef.value.submit();
   }
 }
 
 // ✅ 提交表单 - 由 UForm 自动验证后触发
-async function onSubmit(event: FormSubmitEvent<Schema>) {
-  const toast = useToast()
+async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
+  const toast = useToast();
 
   // 检查车牌号是否有异步验证错误
   if (store.numberError) {
     toast.add({
-      title: '验证失败',
-      description: '请修正车牌号错误',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-circle'
-    })
-    return
+      title: "验证失败",
+      description: "请修正车牌号错误",
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
+    return;
   }
 
-  if (loading.value) return
+  if (loading.value) return;
 
-  loading.value = true
+  loading.value = true;
   try {
-    event.data.id = props.videoId
+    const submitData = {
+      ...event.data,
+      id: props.videoId,
+    };
     const response = props.videoId
-        ? await store.updateVideo(event.data)
-        : await store.createVideo(event.data)
+      ? await store.updateVideo(event.data)
+      : await store.createVideo(event.data);
 
     if (!response || !response.data) {
       toast.add({
-        title: '操作失败',
-        description: '请重试',
-        color: 'error',
-        icon: 'i-heroicons-exclamation-circle'
-      })
-      return
+        title: "操作失败",
+        description: "请重试",
+        color: "error",
+        icon: "i-heroicons-exclamation-circle",
+      });
+      return;
     }
 
     toast.add({
-      title: '成功',
-      description: props.videoId ? '更新成功' : '创建成功',
-      color: 'success',
-      icon: 'i-heroicons-check-circle'
-    })
+      title: "成功",
+      description: props.videoId ? "更新成功" : "创建成功",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
 
     // 先 emit 事件，让父组件刷新列表
-    emit('success')
+    emit("success");
 
     // 使用 nextTick 确保 DOM 更新后再关闭
-    await nextTick()
+    await nextTick();
 
     // 通过 emit 关闭 dialog
-    emit('update:open', false)
-
+    emit("update:open", false);
   } catch (error) {
     toast.add({
-      title: '操作失败',
-      description: error.message || '请重试',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-circle'
-    })
+      title: "操作失败",
+      description: (error as Error).message || "请重试",
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
@@ -195,7 +221,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     :dismissible="false"
     :ui="{
       content: 'w-full max-w-2xl',
-      footer: 'justify-end' 
+      footer: 'justify-end',
     }"
   >
     <template #body>
@@ -204,19 +230,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         id="v-form"
         ref="formRef"
         :schema="schema"
-        :state="state"
+        :state="state as any"
         class="space-y-4"
-        @submit="onSubmit"
+        @submit="onSubmit as any"
       >
         <UFormField
           label="车牌号"
           name="number"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
           :error="store.numberError || undefined"
@@ -229,17 +255,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             class="w-[300px]"
             @blur="handleNumberBlur"
           >
-            <template
-              v-if="state.number && !props.videoId"
-              #trailing
-            >
+            <template v-if="state.number && !props.videoId" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
                 icon="i-lucide-x"
                 aria-label="清空"
-                @click="state.number = ''; store.clearNumberError()"
+                @click="
+                  state.number = '';
+                  store.clearNumberError();
+                "
               />
             </template>
           </UInput>
@@ -250,10 +276,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="name"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
         >
@@ -262,10 +288,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             placeholder="请输入视频名称"
             class="w-[300px]"
           >
-            <template
-              v-if="state.name"
-              #trailing
-            >
+            <template v-if="state.name" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
@@ -283,22 +306,23 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="performer"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
         >
           <USelectMenu
-            v-model="state.performer"
+            v-model="state.performer as string[]"
             :items="performerOptions"
             placeholder="请选择演员"
             clear
+            multiple
             trailing-icon="i-lucide-arrow-down"
             :search-input="{
               placeholder: 'Filter...',
-              icon: 'i-lucide-search'
+              icon: 'i-lucide-search',
             }"
             value-key="value"
             label-key="label"
@@ -311,10 +335,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="releaseDate"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
         >
@@ -325,16 +349,28 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               icon="i-lucide-calendar"
               class="w-[300px] justify-start"
             >
-              {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : '请选择日期' }}
+              {{
+                selectedDate
+                  ? df.format(selectedDate.toDate(getLocalTimeZone()))
+                  : "请选择日期"
+              }}
             </UButton>
 
             <template #content>
               <UCalendar
                 v-model="selectedDate"
-                :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
+                :max-value="
+                  new CalendarDate(
+                    new Date().getFullYear(),
+                    new Date().getMonth() + 1,
+                    new Date().getDate(),
+                  )
+                "
                 locale="zh-CN"
                 class="p-2"
-                @update:model-value="handleDateSelect"
+                @update:model-value="
+                  (value) => handleDateSelect(value as CalendarDate | null)
+                "
               />
             </template>
           </UPopover>
@@ -345,10 +381,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="rating"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <div class="flex gap-1">
@@ -360,8 +396,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               @click="state.rating = star"
             >
               <UIcon
-                :name="star <= state.rating ? 'i-heroicons-star-solid' : 'i-heroicons-star-outline'"
-                :class="star <= state.rating ? 'text-yellow-500' : 'text-gray-300'"
+                :name="
+                  star <= state.rating
+                    ? 'i-heroicons-star-solid'
+                    : 'i-heroicons-star-outline'
+                "
+                :class="
+                  star <= state.rating ? 'text-yellow-500' : 'text-gray-300'
+                "
               />
             </button>
           </div>
@@ -372,10 +414,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="status"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <USelect
@@ -384,7 +426,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :items="[
               { label: '未下载', value: 0 },
               { label: '已下载', value: 1 },
-              { label: '已观看', value: 2 }
+              { label: '已观看', value: 2 },
             ]"
             class="w-[300px]"
           />
@@ -395,10 +437,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="magnetUri"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
         >
@@ -408,10 +450,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :rows="3"
             class="w-[300px]"
           >
-            <template
-              v-if="state.magnetUri"
-              #trailing
-            >
+            <template v-if="state.magnetUri" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
@@ -427,13 +466,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </template>
 
     <template #footer="{ close }">
-      <UButton
-        color="gray"
-        variant="ghost"
-        @click="close"
-      >
-        取消
-      </UButton>
+      <UButton color="gray" variant="ghost" @click="close"> 取消 </UButton>
       <UButton
         type="button"
         color="primary"

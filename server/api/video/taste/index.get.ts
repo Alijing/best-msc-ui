@@ -2,7 +2,7 @@
  * 获取兴趣视频列表
  */
 import { z } from 'zod'
-import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
+import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
 import {serverApiFetch} from '~/utils/api'
 import type {ApiResponse} from "~/types/api"
 import type {TasteVideo} from "~/stores/types/tasteVideo";
@@ -22,7 +22,7 @@ export default defineApiEventHandler({
   handler: async (event, payload) => {
     const { pageIndex, pageSize, number, performer, rating, status, gmtCreate } = payload
     // 构建查询参数
-    const queryParams: Record<string, any> = {
+    const queryParams: Record<string, string | string[] | number> = {
       pageIndex: String(pageIndex),
       pageSize: String(pageSize)
     }

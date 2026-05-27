@@ -1,0 +1,33 @@
+---
+description: Nuxt UI 组件、表单表格与页面/模块组件写法
+globs: "**/*.{vue}"
+alwaysApply: false
+---
+
+# Vue 与 Nuxt UI
+
+## 组件
+
+- 直接使用 `<UButton>`、`<UInput>`、`<UForm>`、`<UModal>` 等，无需 import
+- 图标：`<UIcon name="i-heroicons-home" />`；动态 `` `i-heroicons-${name}` ``
+
+## 表单
+
+- 简单：手动校验 + `UInput` 的 `error`
+- 复杂：Zod schema + `UForm`；提交用 `:loading` 防重复
+
+## 表格与列表
+
+- 简单列表：`UTable`；分页用 `UPagination`
+- 大列表避免模板内复杂计算，用 `computed`
+
+## 页面与模块组件
+
+- `pages/*.vue` 只做布局组装，业务 UI 放 `modules/components/[module]/`
+- 单页专用组件不放 `components/` 根目录（放 `modules/components/`）
+
+## 其他
+
+- 暗色模式：`useColorMode()`
+- 图片优先 `<NuxtImg>`
+- 访问 `window`/`document` 须在 `onMounted` 或 `import.meta.client`

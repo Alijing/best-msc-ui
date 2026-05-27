@@ -355,10 +355,7 @@ function expandMatchingNodes(nodes: MenuNode[], searchValue: string): boolean {
   return hasMatch;
 }
 
-// 定义 emits
 const emit = defineEmits<{
-  add: [node: MenuNode];
-  edit: [node: MenuNode];
   delete: [node: MenuNode];
 }>();
 
@@ -374,9 +371,9 @@ async function loadMenuTree() {
   }
 }
 
-// 暴露方法给父组件
 defineExpose({
   loadMenuTree,
+  openAddDialog,
 });
 
 // 初始化加载菜单树

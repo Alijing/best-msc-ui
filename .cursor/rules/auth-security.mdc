@@ -1,0 +1,34 @@
+---
+description: 鉴权守卫、API 拦截、Cookie 安全与代码质量
+globs: "{middleware/**,plugins/**,utils/api.ts,server/api/auth/**,modules/components/auth/**,app.vue}"
+alwaysApply: false
+---
+
+# 鉴权与安全
+
+## 三层防护
+
+1. `middleware/auth.global.ts` — 路由级，白名单 + 重定向
+2. `utils/api.ts` — 请求拦截（`interceptApiRequest`）
+3. `handleApiResponse` — 401 清状态并跳转登录
+
+## Token 存储
+
+- 唯一持久化：**HttpOnly Cookie**（服务端 `login.post.ts` 设置）
+- 运行时：`useState` / Pinia，**不用 localStorage 存 token**
+
+## 安全（必须）
+
+- 禁止未清洗的 `v-html`
+- Cookie：`httpOnly`、`secure`（生产）、`sameSite: 'lax'` 或 `'strict'`
+- 开放重定向：仅允许站内路径（`/` 开头且非 `//`）
+
+## 权限
+
+- 从 `useUserStore().permissions` 读取；可封装 `can(permission)`
+- 路由跳转用 `navigateTo`
+
+## 质量
+
+- `pnpm lint` / `pnpm type-check`；生产构建移除 `console.log`
+- 提交信息推荐 Conventional Commits（`feat:`、`fix:`、`docs:` 等）

@@ -1,0 +1,40 @@
+---
+description: Pinia Store 命名、CRUD 模式与错误处理
+globs: stores/**/*
+alwaysApply: false
+---
+
+# Pinia Store
+
+## 约定
+
+- 文件：`stores/[name].store.ts`；类型：`stores/types/[name].d.ts`
+- 使用 `defineStore` + Composition API
+- 已有 Store：`user`、`app`、`menu`、`role`、`performer`、`tasteVideo`
+
+## 请求与反馈
+
+- 统一用 `clientApiFetch` / `$fetch` 调 `/api/*`
+- 判断 `response.code === 20000` 再更新 state
+- Store 内处理 `loading`；失败用 `useToast()` 提示
+
+## 模式示例
+
+```ts
+const loading = ref(false)
+const toast = useToast()
+
+async function fetchList(params: QueryParams) {
+  loading.value = true
+  try {
+    const res = await clientApiFetch<ApiResponse<Item[]>>('/api/xxx', { query: params })
+    if (res.code !== 20000) {
+      toast.add({ title: '错误', description: res.message, color: 'error' })
+      return
+    }
+    list.value = res.data ?? []
+  } finally {
+    loading.value = false
+  }
+}
+```
