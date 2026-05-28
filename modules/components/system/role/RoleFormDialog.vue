@@ -8,9 +8,9 @@ const store = useRoleStore()
 const open = defineModel<boolean>('open', { default: false })
 
 const props = withDefaults(defineProps<{
-  roleId?: string | number | null
+  roleId?: string | number
 }>(), {
-  roleId: null
+  roleId: undefined
 })
 
 const emit = defineEmits<{

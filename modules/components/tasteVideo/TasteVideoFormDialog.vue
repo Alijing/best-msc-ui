@@ -173,8 +173,8 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
       id: props.videoId,
     };
     const response = props.videoId
-      ? await store.updateVideo(event.data)
-      : await store.createVideo(event.data);
+      ? await store.updateVideo(submitData)
+      : await store.createVideo(submitData);
 
     if (!response || !response.data) {
       toast.add({
