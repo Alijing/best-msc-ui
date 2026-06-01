@@ -1,133 +1,160 @@
 /**
  * 演员管理 Store
  */
-import { defineStore } from 'pinia'
-import type { ApiResponse } from '~/types/api'
-import type { Performer, PerformerQuery, PerformerRequest } from '~/stores/types/performer'
+import { defineStore } from "pinia";
+import type { ApiResponse } from "~/types/api";
+import type {
+  Performer,
+  PerformerQuery,
+  PerformerRequest,
+} from "~/stores/types/performer";
 
 export interface PerformerState {
-  list: Performer[]
-  total: number
-  loading: boolean
-  query: PerformerQuery
+  list: Performer[];
+  total: number;
+  loading: boolean;
+  query: PerformerQuery;
   // 姓名验证状态
-  nameValidating: boolean
-  nameError: string
+  nameValidating: boolean;
+  nameError: string;
 }
 
-export const usePerformerStore = defineStore('performer', () => {
-  const state = useState<PerformerState>('performer', () => ({
+export const usePerformerStore = defineStore("performer", () => {
+  const state = useState<PerformerState>("performer", () => ({
     list: [],
     total: 0,
     loading: false,
     query: {
       pageIndex: 1,
       pageSize: 10,
-      name: undefined
+      name: undefined,
     },
     nameValidating: false,
-    nameError: ''
-  }))
+    nameError: "",
+  }));
 
   /**
    * 获取演员列表
    */
   async function fetchList(query?: Partial<PerformerQuery>) {
     try {
-      state.value.loading = true
+      state.value.loading = true;
 
       if (query) {
-        state.value.query = { ...state.value.query, ...query }
+        state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<Performer[]>>('/api/video/performer', {
-        method: 'GET',
-        query: {
-          pageIndex: state.value.query.pageIndex,
-          pageSize: state.value.query.pageSize,
-          ...(state.value.query.name && { name: state.value.query.name })
-        }
-      })
+      const response = await clientApiFetch<ApiResponse<Performer[]>>(
+        "/api/video/performer",
+        {
+          method: "GET",
+          query: {
+            pageIndex: state.value.query.pageIndex,
+            pageSize: state.value.query.pageSize,
+            ...(state.value.query.name && { name: state.value.query.name }),
+          },
+        },
+      );
 
       if (response.code === 20000) {
-        state.value.list = response.data
-        state.value.total = response.total || 0
+        state.value.list = (response.data as unknown as Performer[]) || [];
+        state.value.total = response.total || 0;
       }
     } catch (error) {
-      console.error('[PerformerStore] 获取演员列表失败:', error)
-      state.value.list = []
-      state.value.total = 0
+      console.error("[PerformerStore] 获取演员列表失败:", error);
+      state.value.list = [];
+      state.value.total = 0;
     } finally {
-      state.value.loading = false
+      state.value.loading = false;
     }
   }
 
   /**
    * 根据ID获取演员详情
    */
-  async function fetchPerformerById(id: string | number): Promise<PerformerRequest | null> {
-    const response = await clientApiFetch<ApiResponse<PerformerRequest>>(`/api/video/performer/${id}`, {
-      method: 'GET'
-    })
+  async function fetchPerformerById(
+    id: string | number,
+  ): Promise<PerformerRequest | null> {
+    const response = await clientApiFetch<ApiResponse<PerformerRequest>>(
+      `/api/video/performer/${id}`,
+      {
+        method: "GET",
+      },
+    );
 
     if (response.code === 20000) {
-      return response.data
+      return response.data as unknown as PerformerRequest;
     }
-    return null
+    return null;
   }
 
   /**
    * 创建演员
    */
   async function createPerformer(payload: PerformerRequest) {
-    const data = await clientApiFetch<ApiResponse<boolean>>('/api/video/performer', {
-      method: 'POST',
-      body: payload
-    })
+    const data = await clientApiFetch<ApiResponse<boolean>>(
+      "/api/video/performer",
+      {
+        method: "POST",
+        body: payload,
+      },
+    );
 
     if (data.code === 20000) {
-      await fetchList()
+      await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
-      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'create', data: payload })
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
+        action: "create",
+        data: payload,
+      });
     }
 
-    return data
+    return data;
   }
 
   /**
    * 更新演员
    */
   async function updatePerformer(payload: PerformerRequest) {
-    const data = await clientApiFetch<ApiResponse<boolean>>('/api/video/performer', {
-      method: 'PUT',
-      body: payload
-    })
+    const data = await clientApiFetch<ApiResponse<boolean>>(
+      "/api/video/performer",
+      {
+        method: "PUT",
+        body: payload,
+      },
+    );
 
     if (data.code === 20000) {
-      await fetchList()
+      await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
-      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'update', data: payload })
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
+        action: "update",
+        data: payload,
+      });
     }
 
-    return data
+    return data;
   }
 
   /**
    * 删除演员
    */
   async function deletePerformer(ids: (string | number)[]) {
-    const response = await clientApiFetch<ApiResponse<boolean>>('/api/video/performer', {
-      method: 'DELETE',
-      body: { ids }
-    })
+    const response = await clientApiFetch<ApiResponse<boolean>>(
+      "/api/video/performer",
+      {
+        method: "DELETE",
+        body: { ids },
+      },
+    );
 
     if (response.code === 20000 && response.data) {
-      await fetchList()
+      await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
-      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: 'delete', ids })
+      useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: "delete", ids });
     }
 
-    return response
+    return response;
   }
 
   /**
@@ -135,45 +162,51 @@ export const usePerformerStore = defineStore('performer', () => {
    */
   function resetQuery() {
     state.value.query = {
-      page: 1,
+      pageIndex: 1,
       pageSize: 10,
-      name: undefined
-    }
+      name: undefined,
+    };
   }
 
   /**
    * 验证演员姓名
    */
-  async function validateName(name: string, excludeId?: number) {
+  async function validateName(
+    name: string,
+    excludeId?: number | string | null,
+  ) {
     // 清空之前的错误
-    state.value.nameError = ''
+    state.value.nameError = "";
 
     // 如果为空，不验证
     if (!name) {
-      return
+      return;
     }
 
-    state.value.nameValidating = true
+    state.value.nameValidating = true;
 
     try {
-      const params: any = { name }
+      const params: any = { name };
       if (excludeId !== undefined && excludeId !== null) {
-        params.excludeId = excludeId
+        params.excludeId = excludeId;
       }
 
-      const response = await clientApiFetch<ApiResponse<boolean>>('/api/video/performer/check-name', {
-        method: 'GET',
-        params
-      })
+      const response = await clientApiFetch<ApiResponse<boolean>>(
+        "/api/video/performer/check-name",
+        {
+          method: "GET",
+          params,
+        },
+      );
 
       if (response.code === 20000 && !response.data) {
-        state.value.nameError = response.message || '演员姓名已存在'
+        state.value.nameError = response.message || "演员姓名已存在";
       }
     } catch (error) {
-      console.error('[PerformerStore] 验证演员姓名失败:', error)
-      state.value.nameError = '验证失败，请重试'
+      console.error("[PerformerStore] 验证演员姓名失败:", error);
+      state.value.nameError = "验证失败，请重试";
     } finally {
-      state.value.nameValidating = false
+      state.value.nameValidating = false;
     }
   }
 
@@ -181,7 +214,7 @@ export const usePerformerStore = defineStore('performer', () => {
    * 清除姓名验证错误
    */
   function clearNameError() {
-    state.value.nameError = ''
+    state.value.nameError = "";
   }
 
   return {
@@ -198,6 +231,6 @@ export const usePerformerStore = defineStore('performer', () => {
     deletePerformer,
     resetQuery,
     validateName,
-    clearNameError
-  }
-})
+    clearNameError,
+  };
+});

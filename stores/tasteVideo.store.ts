@@ -241,7 +241,10 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
   /**
    * 验证车牌号
    */
-  async function validateNumber(number: string, excludeId?: number | string) {
+  async function validateNumber(
+    number: string,
+    excludeId?: number | string | null,
+  ) {
     // 清空之前的错误
     state.value.numberError = "";
 
@@ -279,7 +282,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
 
   // 创建防抖函数（只创建一次）
   const debouncedValidateNumber = useDebounceFn(
-    (number: string, excludeId?: number | string) => {
+    (number: string, excludeId?: number | string | null) => {
       void validateNumber(number, excludeId);
     },
     500,
@@ -288,7 +291,10 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
   /**
    * 失焦时验证车牌号（带防抖）
    */
-  function validateNumberOnBlur(number: string, excludeId?: number | string) {
+  function validateNumberOnBlur(
+    number: string,
+    excludeId?: number | string | null,
+  ) {
     void debouncedValidateNumber(number, excludeId);
   }
 
@@ -302,7 +308,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
   /**
    * 获取预览图片
    */
-  async function fetchPreviewImages(videoId: number) {
+  async function fetchPreviewImages(videoId: number | string | null) {
     state.value.previewLoading = true;
     state.value.previewImages = [];
 

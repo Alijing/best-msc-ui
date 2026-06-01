@@ -95,7 +95,7 @@ watch(open, async (newVal) => {
         // 初始化日期选择器
         if (performer.birthday) {
           const [year, month, day] = performer.birthday.split('-').map(Number)
-          selectedDate.value = new CalendarDate(year, month, day)
+          selectedDate.value = new CalendarDate(year!, month!, day!)
         }
       }
     }
@@ -195,7 +195,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error) {
     toast.add({
       title: '操作失败',
-      description: error.message || '请重试',
+      description: (error as any).message || '请重试',
       color: 'error',
       icon: 'i-heroicons-exclamation-circle'
     })
@@ -321,7 +321,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
                 locale="zh-CN"
                 class="p-2"
-                @update:model-value="handleDateSelect"
+                @update:model-value="(value) => handleDateSelect(value as CalendarDate | null)"
               />
             </template>
           </UPopover>
@@ -339,7 +339,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           }"
         >
           <UInputNumber
-            v-model="state.height"
+            v-model="state.height as number | undefined"
             placeholder="请输入身高"
             :min="1"
             :step="1"
@@ -359,7 +359,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           }"
         >
           <UInputNumber
-            v-model="state.bust"
+            v-model="state.bust as number | undefined"
             placeholder="请输入胸围"
             :min="1"
             :step="1"
@@ -379,7 +379,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           }"
         >
           <UInputNumber
-            v-model="state.waistSize"
+            v-model="state.waistSize as number | undefined"
             placeholder="请输入腰围"
             :min="1"
             :step="1"
@@ -399,7 +399,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           }"
         >
           <UInputNumber
-            v-model="state.hipCircumference"
+            v-model="state.hipCircumference as number | undefined"
             placeholder="请输入臀围"
             :min="1"
             :step="1"
@@ -511,6 +511,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UButton
         color="gray"
         variant="ghost"
+        class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
         @click="close"
       >
         取消
@@ -519,6 +520,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         type="button"
         color="primary"
         :loading="loading"
+        :disabled="loading"
+        class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
         @click="handleSubmit"
       >
         确定

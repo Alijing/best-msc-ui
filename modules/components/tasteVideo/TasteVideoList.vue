@@ -14,18 +14,18 @@ const tasteVideoStore = useTasteVideoStore();
 const overlay = useOverlay();
 const toast = useToast();
 
-// 创建确认对话框实例
 const confirmDialog = overlay.create(ConfirmDialog, {
   destroyOnClose: true,
 });
 
-// 表格列定义
+const df = new DateFormatter("zh-CN", { dateStyle: "medium" });
+
 const columns: TableColumn<TasteVideo>[] = [
   { accessorKey: "number", header: "车牌号" },
   {
     accessorKey: "name",
     header: "视频名称",
-    cell: ({ row }: { row: any }) => {
+    cell: ({ row }) => {
       const name = row.getValue("name") as string;
       const UTooltip = resolveComponent("UTooltip");
 
@@ -51,17 +51,7 @@ const columns: TableColumn<TasteVideo>[] = [
       );
     },
   },
-  {
-    accessorKey: "performer",
-    header: "演员",
-    cell: ({ row }: any) => {
-      const performer = row.getValue("performer");
-      if (Array.isArray(performer)) {
-        return performer.join(", ");
-      }
-      return String(performer);
-    },
-  },
+  { accessorKey: "performer", header: "演员" },
   {
     accessorKey: "releaseDate",
     header: "发行时间",
@@ -95,6 +85,7 @@ const columns: TableColumn<TasteVideo>[] = [
     header: "状态",
     cell: ({ row }: any) => {
       const status = row.getValue("status");
+      console.log(status);
       const colorMap = { 未下载: "primary", 已下载: "info", 已观看: "error" };
       return h(
         resolveComponent("UBadge"),
@@ -107,19 +98,13 @@ const columns: TableColumn<TasteVideo>[] = [
     },
   },
   {
-    accessorKey: "gmtCreate",
-    header: "创建时间",
-    cell: ({ row }: any) =>
-      new Date(row.getValue("gmtCreate")).toLocaleString("zh-CN"),
-  },
-  {
     accessorKey: "actions",
     header: "操作",
     enableSorting: false,
     meta: {
       class: {
         th: "w-32 text-center",
-        td: "w-32 text-center", // 应用到每个单元格
+        td: "w-32 text-center",
       },
     },
     cell: ({ row }: any) => {
@@ -187,7 +172,6 @@ const columns: TableColumn<TasteVideo>[] = [
   },
 ] as const;
 
-// 表单查询条件
 const queryForm = ref({
   number: "",
   performer: "" as string | number | undefined,
@@ -196,35 +180,23 @@ const queryForm = ref({
 });
 
 const modelValue = shallowRef({
-  start: undefined as CalendarDate | undefined,
-  end: undefined as CalendarDate | undefined,
-});
-
-// 日期格式化
-const df = new DateFormatter("zh-CN", {
-  dateStyle: "medium",
+  start: null as CalendarDate | null,
+  end: null as CalendarDate | null,
 });
 
 const formDialogOpen = ref(false);
 const previewDialogOpen = ref(false);
 const currentVideoId = ref<string | number | null>(null);
 
-// 加载演员字典并获取列表
 onMounted(async () => {
   await tasteVideoStore.fetchPerformerDict();
-  // 默认调用查询接口，不传参数使用默认分页
   await fetchList();
 });
 
-// 获取列表
 async function fetchList() {
-  // 转换日期格式：开始时间 00:00:00，结束时间 23:59:59
   const gmtCreate =
     modelValue.value.start && modelValue.value.end
-      ? [
-          `${modelValue.value.start.toString()} 00:00:00`,
-          `${modelValue.value.end.toString()} 23:59:59`,
-        ]
+      ? [modelValue.value.start.toString(), modelValue.value.end.toString()]
       : undefined;
   await tasteVideoStore.fetchList({
     pageIndex: 1,
@@ -236,17 +208,14 @@ async function fetchList() {
   });
 }
 
-// 分页变化
 function handlePageChange(page: number) {
   tasteVideoStore.fetchList({ pageIndex: page });
 }
 
-// 页面大小变化
 function handlePageSizeChange(size: number) {
   tasteVideoStore.fetchList({ pageSize: size, pageIndex: 1 });
 }
 
-// 查询条件变化（防抖）
 const debouncedFetch = useDebounceFn(() => {
   fetchList();
 }, 500);
@@ -255,7 +224,6 @@ function handleQueryChange() {
   debouncedFetch();
 }
 
-// 重置查询
 function resetQuery() {
   queryForm.value = {
     number: "",
@@ -263,38 +231,30 @@ function resetQuery() {
     rating: undefined,
     status: undefined,
   };
-  modelValue.value = {
-    start: undefined,
-    end: undefined,
-  };
+  modelValue.value = { start: null, end: null };
   tasteVideoStore.resetQuery();
   fetchList();
 }
 
-// 打开新增对话框
 function handleAdd() {
   currentVideoId.value = null;
   formDialogOpen.value = true;
 }
 
-// 打开编辑对话框
 function handleEdit(video: TasteVideo) {
   currentVideoId.value = video.id;
   formDialogOpen.value = true;
 }
 
-// 打开预览对话框
 function handlePreview(video: TasteVideo) {
   currentVideoId.value = video.id;
   previewDialogOpen.value = true;
 }
 
-// 下载（复制磁力链接）
 function handleDownload(video: TasteVideo) {
   navigator.clipboard
     .writeText(video.magnetUri)
     .then(() => {
-      const toast = useToast();
       toast.add({
         title: "复制成功",
         description: "磁力链接已复制到剪贴板",
@@ -302,7 +262,6 @@ function handleDownload(video: TasteVideo) {
       });
     })
     .catch(() => {
-      const toast = useToast();
       toast.add({
         title: "复制失败",
         description: "请手动复制磁力链接",
@@ -312,14 +271,12 @@ function handleDownload(video: TasteVideo) {
     });
 }
 
-// 删除确认
 async function handleDelete(video: TasteVideo) {
-  // 每次都创建新的对话框实例
-  const confirmDialog = overlay.create(ConfirmDialog, {
+  const dialog = overlay.create(ConfirmDialog, {
     destroyOnClose: true,
   });
 
-  const confirmed = await confirmDialog.open({
+  const confirmed = await dialog.open({
     title: "删除视频",
     message: `确定要删除视频【${video.name}】吗？此操作不可恢复。`,
     confirmText: "删除",
@@ -332,7 +289,6 @@ async function handleDelete(video: TasteVideo) {
         title: "删除成功",
         color: "success",
       });
-      // 如果当前页只有一条数据且不是第一页，返回上一页
       if (
         tasteVideoStore.list.length === 1 &&
         tasteVideoStore.query.pageIndex > 1
@@ -353,16 +309,14 @@ async function handleDelete(video: TasteVideo) {
   }
 }
 
-// 表单提交成功
 function handleFormSuccess() {
   fetchList();
 }
 </script>
 
 <template>
-  <div class="p-4">
-    <!-- 查询区域 -->
-    <UCard class="mb-4">
+  <div class="flex flex-col h-full">
+    <UCard class="shrink-0">
       <div class="flex flex-wrap gap-3">
         <UFormGroup label="车牌号">
           <UInput
@@ -422,7 +376,7 @@ function handleFormSuccess() {
 
             <template #content>
               <UCalendar
-                v-model="modelValue"
+                v-model="modelValue as any"
                 class="p-2"
                 locale="zh-CN"
                 :number-of-months="2"
@@ -434,39 +388,71 @@ function handleFormSuccess() {
         </UFormGroup>
 
         <div class="flex items-end gap-2">
-          <UButton color="primary" @click="fetchList">
+          <UButton
+            color="primary"
+            class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            @click="fetchList"
+          >
             <UIcon name="i-heroicons-magnifying-glass-20-solid" class="mr-1" />
             查询
           </UButton>
-          <UButton @click="resetQuery"> 重置 </UButton>
+          <UButton
+            class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            @click="resetQuery"
+          >
+            重置
+          </UButton>
         </div>
       </div>
     </UCard>
 
-    <!-- 操作按钮 -->
-    <div class="mb-4 flex justify-between items-center">
-      <UButton color="primary" @click="handleAdd">
-        <UIcon name="i-heroicons-plus-20-solid" class="mr-1" />
-        新增视频
-      </UButton>
-    </div>
+    <UCard class="flex-1 min-h-0 mt-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold">
+          视频列表
+          <span class="ml-2 text-sm font-normal text-gray-500"
+            >({{ tasteVideoStore.total }} 条记录)</span
+          >
+        </h3>
+        <UButton
+          color="primary"
+          class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+          @click="handleAdd"
+        >
+          <UIcon name="i-heroicons-plus-20-solid" class="mr-1" />
+          新增视频
+        </UButton>
+      </div>
 
-    <!-- 表格区域 -->
-    <UCard>
-      <UTable
-        :loading="tasteVideoStore.loading"
-        loading-animation="elastic"
-        :columns="columns"
-        :data="tasteVideoStore.list || []"
-        class="table-fixed"
-      />
-      <!-- 分页 -->
-      <div class="mt-4 flex items-center justify-between">
-        <USelect
-          v-model="tasteVideoStore.query.pageSize"
-          :items="[10, 20, 50, 100]"
-          @update:model-value="handlePageSizeChange"
+      <div class="flex flex-col" style="max-height: calc(100vh - 420px)">
+        <UTable
+          :loading="tasteVideoStore.loading"
+          loading-animation="elastic"
+          :columns="columns"
+          :data="tasteVideoStore.list || []"
+          class="flex-1 min-h-0"
+          sticky
+          :ui="{
+            tr: 'odd:bg-gray-50/80 dark:odd:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors',
+          }"
         />
+      </div>
+
+      <div
+        class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3"
+      >
+        <div class="flex items-center gap-2 text-sm text-gray-500">
+          <span>每页显示</span>
+          <USelect
+            v-model="tasteVideoStore.query.pageSize"
+            :items="[10, 20, 50, 100]"
+            variant="outline"
+            size="sm"
+            class="w-20"
+            @update:model-value="handlePageSizeChange"
+          />
+          <span>条</span>
+        </div>
         <UPagination
           v-model:page="tasteVideoStore.query.pageIndex"
           :total="tasteVideoStore.total"
@@ -478,7 +464,6 @@ function handleFormSuccess() {
       </div>
     </UCard>
 
-    <!-- 表单对话框 -->
     <TasteVideoFormDialog
       v-model:open="formDialogOpen"
       :video-id="currentVideoId"
@@ -486,7 +471,6 @@ function handleFormSuccess() {
       @success="handleFormSuccess"
     />
 
-    <!-- 预览对话框 -->
     <TasteVideoPreviewDialog
       v-model:open="previewDialogOpen"
       :video-id="currentVideoId"

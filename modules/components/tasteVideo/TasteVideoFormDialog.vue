@@ -10,12 +10,11 @@ import type { TasteVideoRequest } from "@/stores/types/tasteVideo";
 
 const store = useTasteVideoStore();
 
-// ✅ 使用 defineModel 实现双向绑定
 const open = defineModel<boolean>("open", { default: false });
 
 const props = withDefaults(
   defineProps<{
-    videoId?: string | number;
+    videoId?: string | number | null;
     performerDict: Array<{ id: string | number; name: string }>;
   }>(),
   {
@@ -28,7 +27,6 @@ const emit = defineEmits<{
   (e: "update:open", value: boolean): void;
 }>();
 
-// ✅ 计算属性优化
 const performerOptions = computed(() =>
   props.performerDict.map((item) => ({
     label: item.name,
@@ -38,7 +36,6 @@ const performerOptions = computed(() =>
 
 const title = computed(() => (props.videoId ? "编辑兴趣视频" : "新增兴趣视频"));
 
-// ✅ 定义 Zod schema
 const schema = z.object({
   number: z.string().min(1, "请输入车牌号"),
   name: z.string().min(1, "请输入视频名称"),
@@ -63,22 +60,18 @@ const state = reactive<TasteVideoRequest>({
   magnetUri: "",
 });
 
-// 日期选择器引用
 const selectedDate = shallowRef<CalendarDate | null>(null);
 
-// 日期格式化
 const df = new DateFormatter("zh-CN", {
   dateStyle: "medium",
 });
 
 const loading = ref(false);
 
-// ✅ 监听 open 变化，初始化表单
 watch(
   open,
   async (newVal) => {
     if (newVal) {
-      // 重置表单
       state.number = "";
       state.name = "";
       state.performer = [] as string[];
@@ -89,7 +82,6 @@ watch(
       selectedDate.value = null;
       store.clearNumberError();
 
-      // 如果是编辑模式，获取详细数据
       if (props.videoId) {
         const video = await store.fetchVideoById(props.videoId);
         if (video) {
@@ -103,10 +95,8 @@ watch(
           state.status = video.status;
           state.magnetUri = video.magnetUri;
 
-          // 初始化日期选择器
           if (video.releaseDate) {
             const [year, month, day] = video.releaseDate.split("-").map(Number);
-
             selectedDate.value = new CalendarDate(
               year ?? 0,
               month ?? 0,
@@ -120,17 +110,11 @@ watch(
   { immediate: true },
 );
 
-// ✅ 处理日期选择
 function handleDateSelect(date: CalendarDate | null) {
   selectedDate.value = date;
-  if (date) {
-    state.releaseDate = date.toString();
-  } else {
-    state.releaseDate = "";
-  }
+  state.releaseDate = date ? date.toString() : "";
 }
 
-// ✅ 车牌号失焦验证
 function handleNumberBlur() {
   if (!state.number || props.videoId) {
     store.clearNumberError();
@@ -139,21 +123,17 @@ function handleNumberBlur() {
   store.validateNumberOnBlur(state.number, props.videoId);
 }
 
-// ✅ 手动提交表单
 const formRef = ref();
 
 async function handleSubmit() {
-  // 手动触发表单验证
   if (formRef.value) {
     await formRef.value.submit();
   }
 }
 
-// ✅ 提交表单 - 由 UForm 自动验证后触发
 async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
   const toast = useToast();
 
-  // 检查车牌号是否有异步验证错误
   if (store.numberError) {
     toast.add({
       title: "验证失败",
@@ -193,13 +173,8 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
       icon: "i-heroicons-check-circle",
     });
 
-    // 先 emit 事件，让父组件刷新列表
     emit("success");
-
-    // 使用 nextTick 确保 DOM 更新后再关闭
     await nextTick();
-
-    // 通过 emit 关闭 dialog
     emit("update:open", false);
   } catch (error) {
     toast.add({
@@ -221,96 +196,83 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
     :dismissible="false"
     :ui="{
       content: 'w-full max-w-2xl',
-      footer: 'justify-end',
+      footer: 'justify-end gap-2',
     }"
   >
     <template #body>
-      <!-- ✅ 使用 UForm 组件，自动处理验证 -->
       <UForm
         id="v-form"
         ref="formRef"
         :schema="schema"
         :state="state as any"
-        class="space-y-4"
+        class="space-y-5"
         @submit="onSubmit as any"
       >
-        <UFormField
-          label="车牌号"
-          name="number"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
-          required
-          :error="store.numberError || undefined"
+        <div
+          class="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-4 items-start"
         >
-          <UInput
-            v-model="state.number"
-            placeholder="请输入车牌号"
-            :disabled="!!props.videoId"
-            :loading="store.numberValidating"
-            class="w-[300px]"
-            @blur="handleNumberBlur"
+          <UFormField
+            label="车牌号"
+            name="number"
+            orientation="vertical"
+            required
+            :error="store.numberError || undefined"
           >
-            <template v-if="state.number && !props.videoId" #trailing>
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-x"
-                aria-label="清空"
-                @click="
-                  state.number = '';
-                  store.clearNumberError();
-                "
-              />
-            </template>
-          </UInput>
-        </UFormField>
+            <UInput
+              v-model="state.number"
+              placeholder="请输入车牌号"
+              :disabled="!!props.videoId"
+              :loading="store.numberValidating"
+              class="w-full"
+              @blur="handleNumberBlur"
+            >
+              <template v-if="state.number && !props.videoId" #trailing>
+                <UButton
+                  color="neutral"
+                  variant="link"
+                  size="sm"
+                  icon="i-lucide-x"
+                  aria-label="清空车牌号"
+                  class="cursor-pointer transition-opacity duration-150 hover:opacity-70"
+                  @click="
+                    state.number = '';
+                    store.clearNumberError();
+                  "
+                />
+              </template>
+            </UInput>
+          </UFormField>
 
-        <UFormField
-          label="视频名称"
-          name="name"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
-          required
-        >
-          <UInput
-            v-model="state.name"
-            placeholder="请输入视频名称"
-            class="w-[300px]"
+          <UFormField
+            label="视频名称"
+            name="name"
+            orientation="vertical"
+            required
           >
-            <template v-if="state.name" #trailing>
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-x"
-                aria-label="清空"
-                @click="state.name = ''"
-              />
-            </template>
-          </UInput>
-        </UFormField>
+            <UInput
+              v-model="state.name"
+              placeholder="请输入视频名称"
+              class="w-full"
+            >
+              <template v-if="state.name" #trailing>
+                <UButton
+                  color="neutral"
+                  variant="link"
+                  size="sm"
+                  icon="i-lucide-x"
+                  aria-label="清空名称"
+                  class="cursor-pointer transition-opacity duration-150 hover:opacity-70"
+                  @click="state.name = ''"
+                />
+              </template>
+            </UInput>
+          </UFormField>
+        </div>
 
         <UFormField
           label="演员"
           name="performer"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
+          orientation="vertical"
           required
         >
           <USelectMenu
@@ -319,27 +281,21 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
             placeholder="请选择演员"
             clear
             multiple
-            trailing-icon="i-lucide-arrow-down"
+            trailing-icon="i-lucide-chevrons-up-down"
             :search-input="{
-              placeholder: 'Filter...',
+              placeholder: '搜索演员...',
               icon: 'i-lucide-search',
             }"
             value-key="value"
             label-key="label"
-            class="w-[300px]"
+            class="w-full"
           />
         </UFormField>
 
         <UFormField
           label="发行时间"
           name="releaseDate"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
+          orientation="vertical"
           required
         >
           <UPopover>
@@ -347,7 +303,7 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
               color="neutral"
               variant="subtle"
               icon="i-lucide-calendar"
-              class="w-[300px] justify-start"
+              class="w-full justify-start text-left"
             >
               {{
                 selectedDate
@@ -376,50 +332,35 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
           </UPopover>
         </UFormField>
 
-        <UFormField
-          label="评分"
-          name="rating"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
-        >
-          <div class="flex gap-1">
+        <UFormField label="评分" name="rating" orientation="vertical">
+          <div class="flex gap-1" role="radiogroup" aria-label="评分">
             <button
               v-for="star in 5"
               :key="star"
               type="button"
-              class="text-2xl focus:outline-none"
+              class="w-10 h-10 rounded-lg transition-all duration-150 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              :class="
+                star <= state.rating
+                  ? 'text-yellow-500'
+                  : 'text-gray-300 dark:text-gray-600'
+              "
+              :aria-label="`${star}星`"
+              :aria-pressed="star <= state.rating"
               @click="state.rating = star"
             >
               <UIcon
                 :name="
                   star <= state.rating
-                    ? 'i-heroicons-star-solid'
-                    : 'i-heroicons-star-outline'
+                    ? 'i-heroicons-star-20-solid'
+                    : 'i-heroicons-star'
                 "
-                :class="
-                  star <= state.rating ? 'text-yellow-500' : 'text-gray-300'
-                "
+                class="w-6 h-6"
               />
             </button>
           </div>
         </UFormField>
 
-        <UFormField
-          label="状态"
-          name="status"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
-        >
+        <UFormField label="状态" name="status" orientation="vertical">
           <USelect
             v-model="state.status"
             placeholder="请选择状态"
@@ -428,35 +369,30 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
               { label: '已下载', value: 1 },
               { label: '已观看', value: 2 },
             ]"
-            class="w-[300px]"
+            class="w-full"
           />
         </UFormField>
 
         <UFormField
           label="磁力链接"
           name="magnetUri"
-          orientation="horizontal"
-          :ui="{
-            root: '!justify-start',
-            wrapper: 'w-[80px] shrink-0',
-            container: 'flex items-center',
-            error: '!mt-0 ms-2',
-          }"
+          orientation="vertical"
           required
         >
           <UTextarea
             v-model="state.magnetUri"
             placeholder="请输入磁力链接"
-            :rows="3"
-            class="w-[300px]"
+            :rows="2"
+            class="w-full"
           >
             <template v-if="state.magnetUri" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
-                icon="i-lucide-circle-x"
-                aria-label="清空"
+                icon="i-lucide-x"
+                aria-label="清空链接"
+                class="cursor-pointer transition-opacity duration-150 hover:opacity-70"
                 @click="state.magnetUri = ''"
               />
             </template>
@@ -466,14 +402,23 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
     </template>
 
     <template #footer="{ close }">
-      <UButton color="gray" variant="ghost" @click="close"> 取消 </UButton>
+      <UButton
+        color="gray"
+        variant="ghost"
+        class="cursor-pointer transition-all duration-150 hover:bg-gray-100 dark:hover:bg-gray-800"
+        @click="close"
+      >
+        取消
+      </UButton>
       <UButton
         type="button"
         color="primary"
         :loading="loading"
+        :disabled="loading"
+        class="cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
         @click="handleSubmit"
       >
-        确定
+        {{ loading ? "提交中..." : "确定" }}
       </UButton>
     </template>
   </UModal>

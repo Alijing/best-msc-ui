@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import {watch} from 'vue'
+import { watch } from 'vue'
 
-// ✅ 使用 defineModel 实现双向绑定
-const open = defineModel<boolean>('open', {default: false})
+const open = defineModel<boolean>('open', { default: false })
 const props = withDefaults(defineProps<{
   videoId?: string | number | null
 }>(), {
@@ -11,10 +10,8 @@ const props = withDefaults(defineProps<{
 
 const tasteVideoStore = useTasteVideoStore()
 
-// 当前图片索引
 const currentImageIndex = ref(0)
 
-// 打开对话框时加载图片
 watch(open, (newVal) => {
   if (newVal && props.videoId) {
     currentImageIndex.value = 0
@@ -24,53 +21,69 @@ watch(open, (newVal) => {
   }
 })
 
-// 上一张
+const hasMultipleImages = computed(() => tasteVideoStore.previewImages.length > 1)
+const canGoPrev = computed(() => currentImageIndex.value > 0)
+const canGoNext = computed(() => currentImageIndex.value < tasteVideoStore.previewImages.length - 1)
+
 function prevImage() {
-  if (currentImageIndex.value > 0) {
+  if (canGoPrev.value) {
     currentImageIndex.value--
   }
 }
 
-// 下一张
 function nextImage() {
-  if (currentImageIndex.value < tasteVideoStore.previewImages.length - 1) {
+  if (canGoNext.value) {
     currentImageIndex.value++
   }
 }
+
+function handleKeydown(e: KeyboardEvent) {
+  if (!open.value) return
+  if (e.key === 'ArrowLeft') prevImage()
+  if (e.key === 'ArrowRight') nextImage()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
 </script>
 
 <template>
   <UModal
     v-model:open="open"
     title="视频图片预览"
-    :dismissible="false"
+    :dismissible="true"
     :ui="{
-      content: 'max-w-4xl w-full h-[520px]',
-      body: 'p-6'
+      content: 'max-w-4xl w-full',
+      body: 'p-4',
+      header: 'px-4 py-3'
     }"
   >
     <template #body>
-      <!-- 图片展示区 -->
       <div class="flex flex-col items-center">
-        <!-- 加载中状态 -->
         <template v-if="tasteVideoStore.previewLoading">
-          <USkeleton class="h-[380px] w-[550px] rounded-lg" />
+          <div class="w-full aspect-video max-h-[400px] flex items-center justify-center">
+            <USkeleton class="w-full h-full rounded-lg" />
+          </div>
         </template>
 
-        <!-- 图片列表 -->
         <template v-else-if="tasteVideoStore.previewImages.length > 0">
           <div class="relative w-full">
-            <!-- 图片展示容器 - 固定高度防止撑大 -->
-            <div class="flex justify-center items-center h-[360px]">
+            <div class="flex justify-center items-center min-h-[300px] max-h-[400px]">
               <NuxtImg
                 v-for="(img, index) in tasteVideoStore.previewImages"
+                :key="img"
                 :src="img"
                 :placeholder="[50, 25, 75, 5]"
                 alt="预览图片"
                 width="640"
                 height="360"
-                class="rounded-lg"
-                :class="{ 'hidden': index !== currentImageIndex }"
+                class="rounded-lg object-contain transition-opacity duration-300 max-h-[400px]"
+                :class="{ 'hidden': index !== currentImageIndex, 'block': index === currentImageIndex }"
                 fit="contain"
                 quality="80"
                 format="webp"
@@ -78,39 +91,49 @@ function nextImage() {
               />
             </div>
 
-            <!-- 切换按钮 -->
-            <div class="absolute top-1/2 -translate-y-1/2 left-0">
+            <template v-if="hasMultipleImages">
               <UButton
                 variant="ghost"
                 size="lg"
-                :disabled="currentImageIndex === 0"
+                :disabled="!canGoPrev"
+                class="absolute top-1/2 -translate-y-1/2 left-2 cursor-pointer transition-all duration-150 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30"
                 @click="prevImage"
               >
-                <UIcon name="i-heroicons-chevron-left-20-solid" />
+                <UIcon name="i-heroicons-chevron-left-20-solid" class="w-6 h-6" />
               </UButton>
-            </div>
-            <div class="absolute top-1/2 -translate-y-1/2 right-0">
               <UButton
                 variant="ghost"
                 size="lg"
-                :disabled="currentImageIndex === tasteVideoStore.previewImages.length - 1"
+                :disabled="!canGoNext"
+                class="absolute top-1/2 -translate-y-1/2 right-2 cursor-pointer transition-all duration-150 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30"
                 @click="nextImage"
               >
-                <UIcon name="i-heroicons-chevron-right-20-solid" />
+                <UIcon name="i-heroicons-chevron-right-20-solid" class="w-6 h-6" />
               </UButton>
-            </div>
+            </template>
+          </div>
 
-            <!-- 指示器 -->
-            <div class="mt-3 text-sm text-gray-500 h-8 flex items-center justify-center gap-8">
+          <div v-if="hasMultipleImages" class="mt-4 flex items-center justify-center gap-3">
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-300 tabular-nums">
               {{ currentImageIndex + 1 }} / {{ tasteVideoStore.previewImages.length }}
+            </span>
+            <div class="flex gap-1.5">
+              <button
+                v-for="(_, index) in tasteVideoStore.previewImages"
+                :key="index"
+                class="w-2 h-2 rounded-full transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                :class="index === currentImageIndex ? 'bg-primary-500 w-4' : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'"
+                :aria-label="`跳转到第 ${index + 1} 张图片`"
+                @click="currentImageIndex = index"
+              />
             </div>
           </div>
         </template>
 
-        <!-- 空状态 -->
         <template v-else>
-          <div class="h-[360px] flex items-center justify-center text-gray-400">
-            暂无预览图片
+          <div class="w-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 gap-3">
+            <UIcon name="i-heroicons-photo" class="w-16 h-16 opacity-50" />
+            <span class="text-sm">暂无预览图片</span>
           </div>
         </template>
       </div>

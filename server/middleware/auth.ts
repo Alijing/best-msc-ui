@@ -15,7 +15,8 @@ export default defineEventHandler(async (event) => {
   if (
     event.path.startsWith('/_nuxt') ||      // Vite 构建文件
     event.path.startsWith('/api') ||         // API 路由（单独处理）
-    event.path.startsWith('/__nuxt_devtools__') // Nuxt 开发工具
+    event.path.startsWith('/__nuxt_devtools__') || // Nuxt 开发工具
+    event.path.startsWith('/@vite')
   ) {
     return
   }

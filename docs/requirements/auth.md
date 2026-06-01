@@ -1,4 +1,4 @@
-﻿---
+---
 status: implemented
 priority: P0
 module: auth
@@ -15,7 +15,7 @@ module: auth
 
 ### 所属模块
 
-pages/login.vue, stores/user.store.ts, server/api/auth/\*
+pages/login.vue, stores/user.store.ts, server/api/auth/*
 
 ### 类型
 
@@ -23,11 +23,11 @@ pages/login.vue, stores/user.store.ts, server/api/auth/\*
 
 ### 详细描述
 
-提供用户登录功能，支持邮箱/账号和密码登录。登录成功后获取用户信息、菜单和权限，跳转到仪表盘首页。失败时显示错误提示。
+提供用户登录功能，支持账号和密码登录。登录成功后获取用户信息、菜单和权限，跳转到仪表盘首页。失败时显示错误提示。
 
 ### 输入
 
-- account: string (必填) - 账号或邮箱
+- account: string (必填) - 账号
 - password: string (必填) - 密码（加密传输）
 
 ### 输出
@@ -38,19 +38,13 @@ pages/login.vue, stores/user.store.ts, server/api/auth/\*
 ### 数据模型
 
 interface LoginRequest {
-account: string
-password: string
+  account: string
+  password: string
 }
 
 interface LoginResponse {
-token: string
-expireTime: number
-user: {
-id: number
-email: string
-name: string
-roles: string[]
-}
+  token: string
+  expireTime: number
 }
 
 ### 依赖
@@ -76,7 +70,7 @@ roles: string[]
 - 未登录访问保护页面保存目标路径
 ```
 
-**优先级**: P0 ✅  
+**优先级**: P0 ✅
 **状态**: 已实现
 
 ---
@@ -129,7 +123,7 @@ components/UserDropdown.vue, stores/user.store.ts, server/api/auth/logout.get.ts
 - 清除范围：user store、cookie、useState
 ```
 
-**优先级**: P0 ✅  
+**优先级**: P0 ✅
 **状态**: 已实现
 
 ---
@@ -165,14 +159,13 @@ Store + API 路由
 
 ### 数据模型
 
-interface UserInfo {
-id: number
-email: string
-name: string
-avatar?: string
-roles: string[]
-menus: MenuNode[]
-permissions: string[]
+interface User {
+  id: string | number
+  account: string
+  name?: string
+  role?: string
+  menus?: MenuNode[]
+  permission?: string[]
 }
 
 ### 依赖
@@ -193,7 +186,7 @@ permissions: string[]
 - 401 自动跳转登录页
 ```
 
-**优先级**: P0 ✅  
+**优先级**: P0 ✅
 **状态**: 已实现
 
 ---
@@ -249,7 +242,7 @@ middleware/auth.global.ts, plugins/auth.client.ts
 - 不影响服务端渲染
 ```
 
-**优先级**: P0 ✅  
+**优先级**: P0 ✅
 **状态**: 已实现
 
 ---
