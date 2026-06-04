@@ -1,23 +1,25 @@
 /**
  * 角色管理 Store
  */
-import { defineStore } from 'pinia'
-import type { ApiResponse } from '~/types/api'
-import type { Role, RoleQuery, RoleRequest } from '~/stores/types/role'
+import { defineStore } from "pinia";
+import type { ApiResponse, DictItem } from "~/types/api";
+import type { Role, RoleQuery, RoleRequest } from "~/stores/types/role";
 
 export interface RoleState {
-  list: Role[]
-  total: number
-  loading: boolean
-  query: RoleQuery
+  list: Role[];
+  total: number;
+  loading: boolean;
+  query: RoleQuery;
   // 编码验证状态
-  codeValidating: boolean
-  codeError: string
+  codeValidating: boolean;
+  codeError: string;
+  // 角色字典
+  roleDict: DictItem[];
 }
 
-export const useRoleStore = defineStore('role', () => {
-  const state = useState<RoleState>('role', () => ({
-    list: [],
+export const useRoleStore = defineStore("role", () => {
+  const state = useState<RoleState>("role", () => ({
+    list: [] as Role[],
     total: 0,
     loading: false,
     query: {
@@ -25,107 +27,113 @@ export const useRoleStore = defineStore('role', () => {
       pageSize: 10,
       name: undefined,
       code: undefined,
-      status: undefined
+      status: undefined,
     },
     codeValidating: false,
-    codeError: ''
-  }))
+    codeError: "",
+    roleDict: [],
+  }));
 
   /**
    * 获取角色列表
    */
   async function fetchList(query?: Partial<RoleQuery>) {
     try {
-      state.value.loading = true
+      state.value.loading = true;
 
       if (query) {
-        state.value.query = { ...state.value.query, ...query }
+        state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch('/api/system/role', {
-        method: 'GET',
+      const response = await clientApiFetch("/api/system/role", {
+        method: "GET",
         query: {
           pageIndex: state.value.query.pageIndex,
           pageSize: state.value.query.pageSize,
           ...(state.value.query.name && { name: state.value.query.name }),
           ...(state.value.query.code && { code: state.value.query.code }),
-          ...(state.value.query.status !== undefined && { status: state.value.query.status })
-        }
-      })
+          ...(state.value.query.status !== undefined && {
+            status: state.value.query.status,
+          }),
+        },
+      });
 
       if (response.code === 20000) {
-        state.value.list = response.data
-        state.value.total = response.total || 0
+        state.value.list = response.data as Role[] || [];
+        state.value.total = response.total || 0;
+        state.value.total = response.total || 0;
       }
     } catch (error) {
-      console.error('[RoleStore] 获取角色列表失败:', error)
-      state.value.list = []
-      state.value.total = 0
+      console.error("[RoleStore] 获取角色列表失败:", error);
+      state.value.list = [];
+      state.value.total = 0;
     } finally {
-      state.value.loading = false
+      state.value.loading = false;
     }
   }
 
   /**
    * 根据ID获取角色详情
    */
-  async function fetchRoleById(id: string | number): Promise<RoleRequest | null> {
+  async function fetchRoleById(
+    id: string | number,
+  ): Promise<RoleRequest | null> {
     const response = await clientApiFetch(`/api/system/role/${id}`, {
-      method: 'GET'
-    })
+      method: "GET",
+    });
 
     if (response.code === 20000) {
-      return response.data
+      return response.data as RoleRequest || null;
     }
-    return null
+    return null;
   }
 
   /**
    * 创建角色
    */
   async function createRole(payload: RoleRequest) {
-    const data = await clientApiFetch('/api/system/role', {
-      method: 'POST',
-      body: payload
-    })
+    const data = await clientApiFetch("/api/system/role", {
+      method: "POST",
+      body: payload,
+    });
 
     if (data.code === 20000) {
-      await fetchList()
+      await fetchList();
     }
 
-    return data
+    return data;
   }
 
   /**
    * 更新角色
    */
   async function updateRole(payload: RoleRequest) {
-    const data = await clientApiFetch('/api/system/role', {
-      method: 'PUT',
-      body: payload
-    })
+    const data = await clientApiFetch("/api/system/role", {
+      method: "PUT",
+      body: payload,
+    });
 
     if (data.code === 20000) {
-      await fetchList()
+      await fetchList();
     }
 
-    return data
+    return data;
   }
 
   /**
    * 删除角色
    */
   async function deleteRole(ids: (string | number)[]) {
-    const response = await clientApiFetch('/api/system/role', {
-      method: 'DELETE',
-      body: { ids }
-    })
+    const response = await clientApiFetch("/api/system/role", {
+      method: "DELETE",
+      body: { ids },
+    });
 
     if (response.code === 20000 && response.data) {
-      await fetchList()
+      await fetchList();
     }
 
-    return response
+    return response;
   }
 
   /**
@@ -137,8 +145,8 @@ export const useRoleStore = defineStore('role', () => {
       pageSize: 10,
       name: undefined,
       code: undefined,
-      status: undefined
-    }
+      status: undefined,
+    };
   }
 
   /**
@@ -146,34 +154,37 @@ export const useRoleStore = defineStore('role', () => {
    */
   async function validateCode(code: string, excludeId?: string | number) {
     // 清空之前的错误
-    state.value.codeError = ''
+    state.value.codeError = "";
 
     // 如果为空，不验证
     if (!code) {
-      return
+      return;
     }
 
-    state.value.codeValidating = true
+    state.value.codeValidating = true;
 
     try {
-      const params: any = { code }
+      const params: any = { code };
       if (excludeId !== undefined && excludeId !== null) {
-        params.id = String(excludeId)
+        params.id = String(excludeId);
       }
 
-      const response = await clientApiFetch<ApiResponse<boolean>>('/api/system/role/check-code', {
-        method: 'GET',
-        params
-      })
+      const response = await clientApiFetch<ApiResponse<boolean>>(
+        "/api/system/role/check-code",
+        {
+          method: "GET",
+          params,
+        },
+      );
 
-      if (response.code === 20000 && !response.data.available) {
-        state.value.codeError = response.data.message || '角色编码已存在'
+      if (response.code === 20000 && !response.data) {
+        state.value.codeError = response.message || "角色编码已存在";
       }
     } catch (error) {
-      console.error('[RoleStore] 验证角色编码失败:', error)
-      state.value.codeError = '验证失败，请重试'
+      console.error("[RoleStore] 验证角色编码失败:", error);
+      state.value.codeError = "验证失败，请重试";
     } finally {
-      state.value.codeValidating = false
+      state.value.codeValidating = false;
     }
   }
 
@@ -181,7 +192,30 @@ export const useRoleStore = defineStore('role', () => {
    * 清除编码验证错误
    */
   function clearCodeError() {
-    state.value.codeError = ''
+    state.value.codeError = "";
+  }
+
+  /**
+   * 获取角色字典
+   */
+  async function fetchDict() {
+    const cached = useState<DictItem[]>("roleDict", () => []);
+
+    if (cached.value.length > 0) {
+      state.value.roleDict = cached.value;
+      return cached.value;
+    }
+
+    const response = await clientApiFetch<ApiResponse<DictItem[]>>(
+      "/api/system/role/dict",
+      { method: "GET" },
+    );
+
+    if (response.code === 20000) {
+      state.value.roleDict = (response.data as unknown as DictItem[]) || [];
+      cached.value = state.value.roleDict;
+    }
+    return response.data;
   }
 
   return {
@@ -191,6 +225,7 @@ export const useRoleStore = defineStore('role', () => {
     query: computed(() => state.value.query),
     codeValidating: computed(() => state.value.codeValidating),
     codeError: computed(() => state.value.codeError),
+    roleDict: computed(() => state.value.roleDict),
     fetchList,
     fetchRoleById,
     createRole,
@@ -198,6 +233,7 @@ export const useRoleStore = defineStore('role', () => {
     deleteRole,
     resetQuery,
     validateCode,
-    clearCodeError
-  }
-})
+    clearCodeError,
+    fetchDict,
+  };
+});

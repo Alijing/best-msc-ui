@@ -3,6 +3,7 @@ status: planned
 priority: P0
 module: user
 ---
+
 ## 二、用户管理模块 🟡
 
 > **模块状态**: 待实现（规划中，以下需求以演员字典模块为模板编写，后续实现时参考）
@@ -35,7 +36,7 @@ pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user
 - account?: string (模糊匹配)
 - name?: string (模糊匹配)
 - phone?: string (模糊匹配)
-- role?: string (精确匹配)
+- role?: string (精确匹配，下拉选择，值需通过字典接口获取)
 
 ### 输出
 
@@ -45,11 +46,11 @@ data: User[]
 }
 
 interface User {
-id: number
+id: number | string
 account: string
 name: string
 phone?: string
-role: 'admin' | 'user' | 'guest'
+role: string
 createTime: Date
 }
 
@@ -66,9 +67,14 @@ role?: string
 
 ### 依赖
 
-- usePerformerStore (fetchList 方法)
+- useUserManageStore (fetchList 方法)
 - UTable, UPagination
 - clientApiFetch
+
+### 后端接口
+
+GET /sys/spider/list # 用户列表
+GET /sys/role/dict # 角色下拉框数据源
 
 ### 样式要求
 

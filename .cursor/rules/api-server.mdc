@@ -25,7 +25,7 @@ alwaysApply: false
 
 ```ts
 import { z } from 'zod'
-import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
+import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
 import { serverApiFetch } from '~/utils/api'
 
 const querySchema = z.object({ pageIndex: z.coerce.number().default(1) })
