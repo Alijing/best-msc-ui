@@ -1,206 +1,248 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type {FormSubmitEvent} from '@nuxt/ui'
-import {CalendarDate, DateFormatter, getLocalTimeZone} from '@internationalized/date'
+import * as z from "zod";
+import type { FormSubmitEvent } from "@nuxt/ui";
+import {
+  CalendarDate,
+  DateFormatter,
+  getLocalTimeZone,
+} from "@internationalized/date";
 
-const store = usePerformerStore()
+const store = usePerformerStore();
 
 // ✅ 使用 defineModel 实现双向绑定
-const open = defineModel<boolean>('open', {default: false})
+const open = defineModel<boolean>("open", { default: false });
 
-const props = withDefaults(defineProps<{
-  performerId?: string | number | null
-}>(), {
-  performerId: null
-})
+const props = withDefaults(
+  defineProps<{
+    performerId?: string | number | null;
+  }>(),
+  {
+    performerId: null,
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'success'): void
-  (e: 'update:open', value: boolean): void
-}>()
+  (e: "success"): void;
+  (e: "update:open", value: boolean): void;
+}>();
 
-const title = computed(() => props.performerId ? '编辑演员' : '新增演员')
+const title = computed(() => (props.performerId ? "编辑演员" : "新增演员"));
 
 // ✅ 定义 Zod schema
 const schema = z.object({
-  name: z.string().min(1, '请输入演员姓名'),
+  name: z.string().min(1, "请输入演员姓名"),
   enUsName: z.string().optional(),
   birthday: z.string().optional(),
-  height: z.number().positive().int().optional().or(z.literal('')),
-  bust: z.number().positive().int().optional().or(z.literal('')),
-  waistSize: z.number().positive().int().optional().or(z.literal('')),
-  hipCircumference: z.number().positive().int().optional().or(z.literal('')),
-  cupSize: z.string().regex(/^[ABCDEFG]$/, '罩杯只能输入A-G').optional().or(z.literal('')),
+  debutDate: z.string().optional(),
+  height: z.number().positive().int().optional().or(z.literal("")),
+  bust: z.number().positive().int().optional().or(z.literal("")),
+  waist: z.number().positive().int().optional().or(z.literal("")),
+  hips: z.number().positive().int().optional().or(z.literal("")),
+  cup: z
+    .string()
+    .regex(/^[ABCDEFG]$/, "罩杯只能输入A-G")
+    .optional()
+    .or(z.literal("")),
   hobby: z.string().optional(),
-  remark: z.string().optional()
-})
+  remark: z.string().optional(),
+});
 
-type Schema = z.output<typeof schema>
+type Schema = z.output<typeof schema>;
 
 const state = reactive<Schema>({
-  name: '',
-  enUsName: '',
-  birthday: '',
+  name: "",
+  enUsName: "",
+  birthday: "",
+  debutDate: "",
   height: 158 as any,
   bust: 80 as any,
-  waistSize: 80 as any,
-  hipCircumference: 80 as any,
-  cupSize: '',
-  hobby: '',
-  remark: ''
-})
+  waist: 55 as any,
+  hips: 85 as any,
+  cup: "",
+  hobby: "",
+  remark: "",
+});
 
 // 日期选择器引用
-const selectedDate = shallowRef<CalendarDate | null>(null)
+const selectedDate = shallowRef<CalendarDate | null>(null);
+const selectedDebutDate = shallowRef<CalendarDate | null>(null);
 
 // 日期格式化
-const df = new DateFormatter('zh-CN', {
-  dateStyle: 'medium'
-})
+const df = new DateFormatter("zh-CN", {
+  dateStyle: "medium",
+});
 
-const loading = ref(false)
+const loading = ref(false);
 
-// ✅ 监听 open 变化，初始化表单
-watch(open, async (newVal) => {
-  if (newVal) {
-    // 重置表单
-    state.name = ''
-    state.enUsName = ''
-    state.birthday = ''
-    state.height = 158 as any
-    state.bust = 80 as any
-    state.waistSize = 55 as any
-    state.hipCircumference = 85 as any
-    state.cupSize = ''
-    state.hobby = ''
-    state.remark = ''
-    selectedDate.value = null
-    store.clearNameError()
+// ✅ 监听 open 和 performerId 变化，初始化表单
+watch(
+  [open, () => props.performerId],
+  async ([newOpen, newPerformerId]) => {
+    if (newOpen) {
+      // 重置表单
+      state.name = "";
+      state.enUsName = "";
+      state.birthday = "";
+      state.debutDate = "";
+      state.height = 158 as any;
+      state.bust = 80 as any;
+      state.waist = 55 as any;
+      state.hips = 85 as any;
+      state.cup = "";
+      state.hobby = "";
+      state.remark = "";
+      selectedDate.value = null;
+      selectedDebutDate.value = null;
+      store.clearNameError();
 
-    // 如果是编辑模式，获取详细数据
-    if (props.performerId) {
-      const performer = await store.fetchPerformerById(props.performerId)
-      if (performer) {
-        state.name = performer.name
-        state.enUsName = performer.enUsName || ''
-        state.birthday = performer.birthday || ''
-        state.height = performer.height || ('' as any)
-        state.bust = performer.bust || ('' as any)
-        state.waistSize = performer.waistSize || ('' as any)
-        state.hipCircumference = performer.hipCircumference || ('' as any)
-        state.cupSize = performer.cupSize || ''
-        state.hobby = performer.hobby || ''
-        state.remark = performer.remark || ''
+      // 如果是编辑模式，获取详细数据
+      if (newPerformerId) {
+        const performer = await store.fetchPerformerById(newPerformerId);
+        if (performer) {
+          state.name = performer.name;
+          state.enUsName = performer.enUsName || "";
+          state.birthday = performer.birthday || "";
+          state.debutDate = performer.debutDate || "";
+          state.height = performer.height || ("" as any);
+          state.bust = performer.bust || ("" as any);
+          state.waist = performer.waist || ("" as any);
+          state.hips = performer.hips || ("" as any);
+          state.cup = performer.cup || "";
+          state.hobby = performer.hobby || "";
+          state.remark = performer.remark || "";
 
-        // 初始化日期选择器
-        if (performer.birthday) {
-          const [year, month, day] = performer.birthday.split('-').map(Number)
-          selectedDate.value = new CalendarDate(year!, month!, day!)
+          // 初始化日期选择器
+          if (performer.birthday) {
+            const [year, month, day] = performer.birthday
+              .split("-")
+              .map(Number);
+            selectedDate.value = new CalendarDate(year!, month!, day!);
+          } else {
+            selectedDate.value = null;
+          }
+          if (performer.debutDate) {
+            const [year, month, day] = performer.debutDate
+              .split("-")
+              .map(Number);
+            selectedDebutDate.value = new CalendarDate(year!, month!, day!);
+          } else {
+            selectedDebutDate.value = null;
+          }
         }
       }
     }
-  }
-}, {immediate: true})
+  },
+  { immediate: true },
+);
 
 // ✅ 处理日期选择
 function handleDateSelect(date: CalendarDate | null) {
-  selectedDate.value = date
+  selectedDate.value = date;
   if (date) {
-    state.birthday = date.toString()
+    state.birthday = date.toString();
   } else {
-    state.birthday = ''
+    state.birthday = "";
+  }
+}
+
+// ✅ 处理出道日期选择
+function handleDebutDateSelect(date: CalendarDate | null) {
+  selectedDebutDate.value = date;
+  if (date) {
+    state.debutDate = date.toString();
+  } else {
+    state.debutDate = "";
   }
 }
 
 // ✅ 姓名失焦验证
 function handleNameBlur() {
   if (!state.name || props.performerId) {
-    store.clearNameError()
-    return
+    store.clearNameError();
+    return;
   }
-  store.validateName(state.name, props.performerId)
+  store.validateName(state.name, props.performerId);
 }
 
 // ✅ 手动提交表单
-const formRef = ref()
+const formRef = ref();
 
 async function handleSubmit() {
   // 手动触发表单验证
   if (formRef.value) {
-    await formRef.value.submit()
+    await formRef.value.submit();
   }
 }
 
 // ✅ 提交表单 - 由 UForm 自动验证后触发
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  const toast = useToast()
+  const toast = useToast();
 
   // 检查姓名是否有异步验证错误
   if (store.nameError) {
     toast.add({
-      title: '验证失败',
-      description: '请修正演员姓名错误',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-circle'
-    })
-    return
+      title: "验证失败",
+      description: "请修正演员姓名错误",
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
+    return;
   }
 
-  if (loading.value) return
+  if (loading.value) return;
 
-  loading.value = true
+  loading.value = true;
   try {
     // 转换数字字段
     const payload: any = {
       ...event.data,
-      id: props.performerId
-    }
+      id: props.performerId,
+    };
 
     // 将空字符串转换为 undefined
-    if (payload.height === '') delete payload.height
-    if (payload.bust === '') delete payload.bust
-    if (payload.waistSize === '') delete payload.waistSize
-    if (payload.hipCircumference === '') delete payload.hipCircumference
+    if (payload.height === "") delete payload.height;
+    if (payload.bust === "") delete payload.bust;
+    if (payload.waist === "") delete payload.waist;
+    if (payload.hips === "") delete payload.hips;
 
     const response = props.performerId
-        ? await store.updatePerformer(payload)
-        : await store.createPerformer(payload)
+      ? await store.updatePerformer(payload)
+      : await store.createPerformer(payload);
 
     if (!response || !response.data) {
       toast.add({
-        title: '操作失败',
-        description: '请重试',
-        color: 'error',
-        icon: 'i-heroicons-exclamation-circle'
-      })
-      return
+        title: "操作失败",
+        description: "请重试",
+        color: "error",
+        icon: "i-heroicons-exclamation-circle",
+      });
+      return;
     }
 
     toast.add({
-      title: '成功',
-      description: props.performerId ? '更新成功' : '创建成功',
-      color: 'success',
-      icon: 'i-heroicons-check-circle'
-    })
+      title: "成功",
+      description: props.performerId ? "更新成功" : "创建成功",
+      color: "success",
+      icon: "i-heroicons-check-circle",
+    });
 
     // 先 emit 事件，让父组件刷新列表
-    emit('success')
+    emit("success");
 
     // 使用 nextTick 确保 DOM 更新后再关闭
-    await nextTick()
+    await nextTick();
 
     // 通过 emit 关闭 dialog
-    emit('update:open', false)
-
+    emit("update:open", false);
   } catch (error) {
     toast.add({
-      title: '操作失败',
-      description: (error as any).message || '请重试',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-circle'
-    })
+      title: "操作失败",
+      description: (error as any).message || "请重试",
+      color: "error",
+      icon: "i-heroicons-exclamation-circle",
+    });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
@@ -212,7 +254,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     :dismissible="false"
     :ui="{
       content: 'w-full max-w-2xl',
-      footer: 'justify-end' 
+      footer: 'justify-end',
     }"
   >
     <template #body>
@@ -230,10 +272,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="name"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
           required
           :error="store.nameError || undefined"
@@ -246,17 +288,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             class="w-[300px]"
             @blur="handleNameBlur"
           >
-            <template
-              v-if="state.name && !props.performerId"
-              #trailing
-            >
+            <template v-if="state.name && !props.performerId" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
                 icon="i-lucide-x"
                 aria-label="清空"
-                @click="state.name = ''; store.clearNameError()"
+                @click="
+                  state.name = '';
+                  store.clearNameError();
+                "
               />
             </template>
           </UInput>
@@ -267,10 +309,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="enUsName"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInput
@@ -278,10 +320,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             placeholder="请输入英文名"
             class="w-[300px]"
           >
-            <template
-              v-if="state.enUsName"
-              #trailing
-            >
+            <template v-if="state.enUsName" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
@@ -299,10 +338,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="birthday"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UPopover>
@@ -312,16 +351,73 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               icon="i-lucide-calendar"
               class="w-[300px] justify-start"
             >
-              {{ selectedDate ? df.format(selectedDate.toDate(getLocalTimeZone())) : '请选择日期' }}
+              {{
+                selectedDate
+                  ? df.format(selectedDate.toDate(getLocalTimeZone()))
+                  : "请选择日期"
+              }}
             </UButton>
 
             <template #content>
               <UCalendar
                 v-model="selectedDate"
-                :max-value="new CalendarDate(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate())"
+                :max-value="
+                  new CalendarDate(
+                    new Date().getFullYear(),
+                    new Date().getMonth() + 1,
+                    new Date().getDate(),
+                  )
+                "
                 locale="zh-CN"
                 class="p-2"
-                @update:model-value="(value) => handleDateSelect(value as CalendarDate | null)"
+                @update:model-value="
+                  (value) => handleDateSelect(value as CalendarDate | null)
+                "
+              />
+            </template>
+          </UPopover>
+        </UFormField>
+
+        <UFormField
+          label="出道日期"
+          name="debutDate"
+          orientation="horizontal"
+          :ui="{
+            root: '!justify-start',
+            wrapper: 'w-[80px] shrink-0',
+            container: 'flex items-center',
+            error: '!mt-0 ms-2',
+          }"
+        >
+          <UPopover>
+            <UButton
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-calendar"
+              class="w-[300px] justify-start"
+            >
+              {{
+                selectedDebutDate
+                  ? df.format(selectedDebutDate.toDate(getLocalTimeZone()))
+                  : "请选择日期"
+              }}
+            </UButton>
+
+            <template #content>
+              <UCalendar
+                v-model="selectedDebutDate"
+                :max-value="
+                  new CalendarDate(
+                    new Date().getFullYear(),
+                    new Date().getMonth() + 1,
+                    new Date().getDate(),
+                  )
+                "
+                locale="zh-CN"
+                class="p-2"
+                @update:model-value="
+                  (value) => handleDebutDateSelect(value as CalendarDate | null)
+                "
               />
             </template>
           </UPopover>
@@ -332,10 +428,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="height"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInputNumber
@@ -352,10 +448,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="bust"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInputNumber
@@ -369,17 +465,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <UFormField
           label="腰围(cm)"
-          name="waistSize"
+          name="waist"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInputNumber
-            v-model="state.waistSize as number | undefined"
+            v-model="state.waist as number | undefined"
             placeholder="请输入腰围"
             :min="1"
             :step="1"
@@ -389,17 +485,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <UFormField
           label="臀围(cm)"
-          name="hipCircumference"
+          name="hips"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInputNumber
-            v-model="state.hipCircumference as number | undefined"
+            v-model="state.hips as number | undefined"
             placeholder="请输入臀围"
             :min="1"
             :step="1"
@@ -409,31 +505,28 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <UFormField
           label="罩杯"
-          name="cupSize"
+          name="cup"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UInput
-            v-model="state.cupSize"
+            v-model="state.cup"
             placeholder="请输入罩杯（如 C、D）"
             class="w-[300px]"
           >
-            <template
-              v-if="state.cupSize"
-              #trailing
-            >
+            <template v-if="state.cup" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
                 size="sm"
                 icon="i-lucide-x"
                 aria-label="清空"
-                @click="state.cupSize = ''"
+                @click="state.cup = ''"
               />
             </template>
           </UInput>
@@ -444,10 +537,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="hobby"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UTextarea
@@ -456,10 +549,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :rows="3"
             class="w-[300px]"
           >
-            <template
-              v-if="state.hobby"
-              #trailing
-            >
+            <template v-if="state.hobby" #trailing>
               <UButton
                 color="neutral"
                 variant="link"
@@ -477,10 +567,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           name="remark"
           orientation="horizontal"
           :ui="{
-            root: '!justify-start', 
+            root: '!justify-start',
             wrapper: 'w-[80px] shrink-0',
             container: 'flex items-center',
-            error: '!mt-0 ms-2'
+            error: '!mt-0 ms-2',
           }"
         >
           <UTextarea
@@ -489,10 +579,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :rows="3"
             class="w-[300px]"
           >
-            <template
-              v-if="state.remark"
-              #trailing
-            >
+            <template v-if="state.remark" #trailing>
               <UButton
                 color="neutral"
                 variant="link"

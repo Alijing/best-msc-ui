@@ -16,6 +16,7 @@
 | 用户管理 | [user.md](./user.md) | `planned` | 独立用户 CRUD，尚未作为独立页面落地 |
 | 角色管理 | [role.md](./role.md) | `implemented` | `pages/system/role` |
 | 菜单管理 | [menu.md](./menu.md) | `implemented` | `pages/system/menu` |
+| 演员管理 | [performer.md](./performer.md) | `implemented` | `pages/video/performer` |
 | 兴趣视频 | [taste.md](./taste.md) | `implemented` | `pages/video/taste` |
 | 共用 | [shared.md](./shared.md) | — | UI 组件、非功能需求、验收与变更历史 |
 

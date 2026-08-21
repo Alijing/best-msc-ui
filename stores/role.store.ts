@@ -2,7 +2,7 @@
  * 角色管理 Store
  */
 import { defineStore } from "pinia";
-import type { ApiResponse, DictItem } from "~/types/api";
+import type { ApiResponse, DictItem, ListResponse } from "~/types/api";
 import type { Role, RoleQuery, RoleRequest } from "~/stores/types/role";
 
 export interface RoleState {
@@ -45,7 +45,7 @@ export const useRoleStore = defineStore("role", () => {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch("/api/system/role", {
+      const response = await clientApiFetch<ApiResponse<ListResponse<Role>>>("/api/system/role", {
         method: "GET",
         query: {
           pageIndex: state.value.query.pageIndex,
@@ -58,10 +58,9 @@ export const useRoleStore = defineStore("role", () => {
         },
       });
 
-      if (response.code === 20000) {
-        state.value.list = response.data as Role[] || [];
-        state.value.total = response.total || 0;
-        state.value.total = response.total || 0;
+      if (response.code === 200) {
+        state.value.list = response.data?.list ?? [];
+        state.value.total = response.data?.total ?? 0;
       }
     } catch (error) {
       console.error("[RoleStore] 获取角色列表失败:", error);
@@ -82,7 +81,7 @@ export const useRoleStore = defineStore("role", () => {
       method: "GET",
     });
 
-    if (response.code === 20000) {
+    if (response.code === 200) {
       return response.data as RoleRequest || null;
     }
     return null;
@@ -97,7 +96,7 @@ export const useRoleStore = defineStore("role", () => {
       body: payload,
     });
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
     }
 
@@ -113,7 +112,7 @@ export const useRoleStore = defineStore("role", () => {
       body: payload,
     });
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
     }
 
@@ -129,7 +128,7 @@ export const useRoleStore = defineStore("role", () => {
       body: { ids },
     });
 
-    if (response.code === 20000 && response.data) {
+    if (response.code === 200 && response.data) {
       await fetchList();
     }
 
@@ -177,8 +176,8 @@ export const useRoleStore = defineStore("role", () => {
         },
       );
 
-      if (response.code === 20000 && !response.data) {
-        state.value.codeError = response.message || "角色编码已存在";
+      if (response.code === 200 && !response.data) {
+        state.value.codeError = response.msg || "角色编码已存在";
       }
     } catch (error) {
       console.error("[RoleStore] 验证角色编码失败:", error);
@@ -211,7 +210,7 @@ export const useRoleStore = defineStore("role", () => {
       { method: "GET" },
     );
 
-    if (response.code === 20000) {
+    if (response.code === 200) {
       state.value.roleDict = (response.data as unknown as DictItem[]) || [];
       cached.value = state.value.roleDict;
     }

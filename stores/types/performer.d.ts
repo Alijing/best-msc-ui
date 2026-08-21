@@ -10,11 +10,12 @@ export interface Performer {
   name: string
   enUsName?: string
   birthday?: string
+  debutDate?: string
   height?: number
   bust?: number
-  waistSize?: number
-  hipCircumference?: number
-  cupSize?: string
+  waist?: number
+  hips?: number
+  cup?: string
   hobby?: string
   remark?: string
 }
@@ -36,11 +37,12 @@ export interface PerformerRequest {
   name: string
   enUsName?: string
   birthday?: string
+  debutDate?: string
   height?: number
   bust?: number
-  waistSize?: number
-  hipCircumference?: number
-  cupSize?: string
+  waist?: number
+  hips?: number
+  cup?: string
   hobby?: string
   remark?: string
 }

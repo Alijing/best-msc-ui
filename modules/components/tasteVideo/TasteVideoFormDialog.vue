@@ -208,9 +208,7 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
         class="space-y-5"
         @submit="onSubmit as any"
       >
-        <div
-          class="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-4 items-start"
-        >
+        <div class="grid grid-cols-3 gap-4 items-start">
           <UFormField
             label="车牌号"
             name="number"
@@ -267,111 +265,113 @@ async function onSubmit(event: FormSubmitEvent<TasteVideoRequest>) {
               </template>
             </UInput>
           </UFormField>
+
+          <UFormField label="评分" name="rating" orientation="vertical">
+            <div class="flex gap-1" role="radiogroup" aria-label="评分">
+              <button
+                v-for="star in 5"
+                :key="star"
+                type="button"
+                class="w-10 h-10 rounded-lg transition-all duration-150 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                :class="
+                  star <= state.rating
+                    ? 'text-yellow-500'
+                    : 'text-gray-300 dark:text-gray-600'
+                "
+                :aria-label="`${star}星`"
+                :aria-pressed="star <= state.rating"
+                @click="state.rating = star"
+              >
+                <UIcon
+                  :name="
+                    star <= state.rating
+                      ? 'i-heroicons-star-20-solid'
+                      : 'i-heroicons-star'
+                  "
+                  class="w-6 h-6"
+                />
+              </button>
+            </div>
+          </UFormField>
         </div>
 
-        <UFormField
-          label="演员"
-          name="performer"
-          orientation="vertical"
-          required
-        >
-          <USelectMenu
-            v-model="state.performer as string[]"
-            :items="performerOptions"
-            placeholder="请选择演员"
-            clear
-            multiple
-            trailing-icon="i-lucide-chevrons-up-down"
-            :search-input="{
-              placeholder: '搜索演员...',
-              icon: 'i-lucide-search',
-            }"
-            value-key="value"
-            label-key="label"
-            class="w-full"
-          />
-        </UFormField>
+        <div class="grid grid-cols-3 gap-4 items-start">
+          <UFormField
+            label="演员"
+            name="performer"
+            orientation="vertical"
+            required
+          >
+            <USelectMenu
+              v-model="state.performer as string[]"
+              :items="performerOptions"
+              placeholder="请选择演员"
+              clear
+              multiple
+              trailing-icon="i-lucide-chevrons-up-down"
+              :search-input="{
+                placeholder: '搜索演员...',
+                icon: 'i-lucide-search',
+              }"
+              value-key="value"
+              label-key="label"
+              class="w-full"
+            />
+          </UFormField>
 
-        <UFormField
-          label="发行时间"
-          name="releaseDate"
-          orientation="vertical"
-          required
-        >
-          <UPopover>
-            <UButton
-              color="neutral"
-              variant="subtle"
-              icon="i-lucide-calendar"
-              class="w-full justify-start text-left"
-            >
-              {{
-                selectedDate
-                  ? df.format(selectedDate.toDate(getLocalTimeZone()))
-                  : "请选择日期"
-              }}
-            </UButton>
+          <UFormField
+            label="发行时间"
+            name="releaseDate"
+            orientation="vertical"
+            required
+          >
+            <UPopover>
+              <UButton
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-calendar"
+                class="w-full justify-start text-left"
+              >
+                {{
+                  selectedDate
+                    ? df.format(selectedDate.toDate(getLocalTimeZone()))
+                    : "请选择日期"
+                }}
+              </UButton>
 
-            <template #content>
-              <UCalendar
-                v-model="selectedDate"
-                :max-value="
-                  new CalendarDate(
-                    new Date().getFullYear(),
-                    new Date().getMonth() + 1,
-                    new Date().getDate(),
-                  )
-                "
-                locale="zh-CN"
-                class="p-2"
-                @update:model-value="
-                  (value) => handleDateSelect(value as CalendarDate | null)
-                "
-              />
-            </template>
-          </UPopover>
-        </UFormField>
+              <template #content>
+                <UCalendar
+                  v-model="selectedDate"
+                  :max-value="
+                    new CalendarDate(
+                      new Date().getFullYear(),
+                      new Date().getMonth() + 1,
+                      new Date().getDate(),
+                    )
+                  "
+                  locale="zh-CN"
+                  class="p-2"
+                  @update:model-value="
+                    (value) => handleDateSelect(value as CalendarDate | null)
+                  "
+                />
+              </template>
+            </UPopover>
+          </UFormField>
 
-        <UFormField label="评分" name="rating" orientation="vertical">
-          <div class="flex gap-1" role="radiogroup" aria-label="评分">
-            <button
-              v-for="star in 5"
-              :key="star"
-              type="button"
-              class="w-10 h-10 rounded-lg transition-all duration-150 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-              :class="
-                star <= state.rating
-                  ? 'text-yellow-500'
-                  : 'text-gray-300 dark:text-gray-600'
-              "
-              :aria-label="`${star}星`"
-              :aria-pressed="star <= state.rating"
-              @click="state.rating = star"
-            >
-              <UIcon
-                :name="
-                  star <= state.rating
-                    ? 'i-heroicons-star-20-solid'
-                    : 'i-heroicons-star'
-                "
-                class="w-6 h-6"
-              />
-            </button>
-          </div>
-        </UFormField>
-
-        <UFormField label="状态" name="status" orientation="vertical">
-          <USelect
-            v-model="state.status"
-            placeholder="请选择状态"
-            :items="[
-              { label: '未下载', value: 0 },
-              { label: '已下载', value: 1 },
-              { label: '已观看', value: 2 },
-            ]"
-            class="w-full"
-          />
-        </UFormField>
+          <UFormField label="状态" name="status" orientation="vertical">
+            <USelect
+              v-model="state.status"
+              placeholder="请选择状态"
+              :items="[
+                { label: '未下载', value: 0 },
+                { label: '已下载', value: 1 },
+                { label: '已观看', value: 2 },
+              ]"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
 
         <UFormField
           label="磁力链接"

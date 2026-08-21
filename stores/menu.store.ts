@@ -119,8 +119,8 @@ export const useMenuStore = defineStore("menu", () => {
         },
       );
 
-      if (response.code !== 20000) {
-        throw new Error(response.message || "菜单删除失败");
+      if (response.code !== 200) {
+        throw new Error(response.msg || "菜单删除失败");
       }
 
       toast.add({
@@ -189,10 +189,10 @@ export const useMenuStore = defineStore("menu", () => {
 
       // 检查路径是否可用
       if (!response.data) {
-        error.value = response.message || "路径已存在";
+        error.value = response.msg || "路径已存在";
         toast.add({
           title: "警告",
-          description: response.message || "路径已存在",
+          description: response.msg || "路径已存在",
           color: "warning",
         });
       }
@@ -218,10 +218,10 @@ export const useMenuStore = defineStore("menu", () => {
         `/api/system/menu/${id}`,
         { method: "GET" },
       );
-      if (response.code === 20000 && response.data) {
+      if (response.code === 200 && response.data) {
         return response.data;
       } else {
-        throw new Error(response.message || "获取菜单详情失败");
+        throw new Error(response.msg || "获取菜单详情失败");
       }
     } catch (error: unknown) {
       const errorMessage =

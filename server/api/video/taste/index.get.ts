@@ -4,7 +4,7 @@
 import { z } from 'zod'
 import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
 import {serverApiFetch} from '~/utils/api'
-import type {ApiResponse} from "~/types/api"
+import type { ApiResponse, ListResponse } from "~/types/api"
 import type {TasteVideo} from "~/stores/types/tasteVideo";
 
 const querySchema = z.object({
@@ -38,7 +38,7 @@ export default defineApiEventHandler({
       }
     }
 
-    return await serverApiFetch<ApiResponse<TasteVideo[]>>(event, '/video/taste/list', {
+    return await serverApiFetch<ApiResponse<ListResponse<TasteVideo>>>(event, '/video/taste/list', {
       method: 'GET',
       query: queryParams
     }, true)

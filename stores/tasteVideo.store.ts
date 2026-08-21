@@ -3,7 +3,7 @@
  */
 import { defineStore } from "pinia";
 import { useDebounceFn } from "@vueuse/core";
-import type { ApiResponse, DictItem } from "~/types/api";
+import type { ApiResponse, DictItem, ListResponse } from "~/types/api";
 import type {
   TasteVideo,
   TasteVideoQuery,
@@ -71,7 +71,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<TasteVideo[]>>(
+      const response = await clientApiFetch<ApiResponse<ListResponse<TasteVideo>>>(
         "/api/video/taste",
         {
           method: "GET",
@@ -97,9 +97,9 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
         },
       );
 
-      if (response.code === 20000) {
-        state.value.list = (response.data as unknown as TasteVideo[]) || [];
-        state.value.total = response.total ?? 0;
+      if (response.code === 200) {
+        state.value.list = response.data?.list ?? [];
+        state.value.total = response.data?.total ?? 0;
       }
     } catch (error) {
       console.error("[TasteVideoStore] 获取视频列表失败:", error);
@@ -124,10 +124,10 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
         },
       );
 
-      if (response.code === 20000) {
+      if (response.code === 200) {
         return response.data as unknown as TasteVideoRequest;
       }
-      throw new Error(response.message || "获取菜单详情失败");
+      throw new Error(response.msg || "获取菜单详情失败");
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "获取菜单详情失败";
@@ -152,7 +152,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       },
     );
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
     }
 
@@ -171,7 +171,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       },
     );
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
     }
 
@@ -190,7 +190,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       },
     );
 
-    if (response.code === 20000 && response.data) {
+    if (response.code === 200 && response.data) {
       await fetchList();
     }
 
@@ -215,7 +215,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       },
     );
 
-    if (response.code === 20000) {
+    if (response.code === 200) {
       state.value.performerDict =
         (response.data as unknown as DictItem[]) || [];
       cached.value = state.value.performerDict;
@@ -269,8 +269,8 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
         },
       );
 
-      if (response.code === 20000 && !response.data) {
-        state.value.numberError = response.message || "车牌号已存在";
+      if (response.code === 200 && !response.data) {
+        state.value.numberError = response.msg || "车牌号已存在";
       }
     } catch (error) {
       console.error("[TasteVideoStore] 验证车牌号失败:", error);
@@ -318,7 +318,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       );
       console.log("[TasteVideoStore] 获取预览图片:", response);
 
-      if (response.code === 20000) {
+      if (response.code === 200) {
         state.value.previewImages = (
           response.data as unknown as string[]
         ).filter((img) => img);

@@ -4,7 +4,7 @@
 import { z } from 'zod'
 import { defineApiEventHandler } from '~/server/utils/defineApiEventHandler'
 import { serverApiFetch } from '~/utils/api'
-import type { ApiResponse } from '~/types/api'
+import type { ApiResponse, ListResponse } from '~/types/api'
 import type { User } from '~/stores/types/user-manage'
 
 const querySchema = z.object({
@@ -29,7 +29,7 @@ export default defineApiEventHandler({
     if (phone) queryParams.phone = phone
     if (role) queryParams.role = role
 
-    return await serverApiFetch<ApiResponse<User[]>>(event, '/sys/spider/list', {
+    return await serverApiFetch<ApiResponse<ListResponse<User>>>(event, '/sys/spider/list', {
       method: 'GET',
       query: queryParams
     }, true)

@@ -4,6 +4,8 @@
 import { z } from 'zod'
 import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
 import { serverApiFetch } from '~/utils/api'
+import type { ApiResponse, ListResponse } from '~/types/api'
+import type { Role } from '~/stores/types/role'
 
 const querySchema = z.object({
   pageIndex: z.coerce.number().default(1),
@@ -26,7 +28,7 @@ export default defineApiEventHandler({
     if (code) queryParams.code = code
     if (status !== undefined) queryParams.status = status
 
-    return await serverApiFetch<ApiResponse<Role[]>>(event, '/sys/role/info', {
+    return await serverApiFetch<ApiResponse<ListResponse<Role>>>(event, '/sys/role/info', {
       method: 'GET',
       query: queryParams
     }, true)

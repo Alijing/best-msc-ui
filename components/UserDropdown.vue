@@ -44,12 +44,12 @@ const items = computed(() => [[
       class="flex items-center space-x-2"
     >
       <UAvatar
-        :src="userStore.user?.avatar"
-        :alt="userStore.user?.name || '用户'"
+        :src="userStore.user?.avatar || undefined"
+        :alt="userStore.user?.nickname || userStore.user?.username || '用户'"
         size="sm"
       />
-      <span v-if="userStore.user?.name" class="hidden md:block text-sm text-gray-700 dark:text-gray-200">
-        {{ userStore.user.name }}
+      <span v-if="userStore.user?.nickname || userStore.user?.username" class="hidden md:block text-sm text-gray-700 dark:text-gray-200">
+        {{ userStore.user?.nickname || userStore.user?.username }}
       </span>
       <UIcon name="i-heroicons-chevron-down" class="w-4 h-4 text-gray-500" />
     </UButton>

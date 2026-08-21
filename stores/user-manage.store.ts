@@ -2,7 +2,7 @@
  * 用户管理 Store
  */
 import { defineStore } from "pinia";
-import type { ApiResponse } from "~/types/api";
+import type { ApiResponse, ListResponse } from "~/types/api";
 import type { User, UserQuery } from "~/stores/types/user-manage";
 
 export interface UserManageState {
@@ -38,7 +38,7 @@ export const useUserManageStore = defineStore("user-manage", () => {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<User[]>>(
+      const response = await clientApiFetch<ApiResponse<ListResponse<User>>>(
         "/api/system/user",
         {
           method: "GET",
@@ -55,9 +55,9 @@ export const useUserManageStore = defineStore("user-manage", () => {
         },
       );
 
-      if (response.code === 20000) {
-        state.value.list = (response.data as unknown as User[]) || [];
-        state.value.total = response.total || 0;
+      if (response.code === 200) {
+        state.value.list = response.data?.list ?? [];
+        state.value.total = response.data?.total ?? 0;
       }
     } catch (error) {
       console.error("[UserManageStore] 获取用户列表失败:", error);

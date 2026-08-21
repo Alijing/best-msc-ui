@@ -324,6 +324,7 @@ function handleFormSuccess() {
             placeholder="请输入车牌号"
             clearable
             @blur="handleQueryChange"
+            @keydown.enter="fetchList"
           />
         </UFormGroup>
 

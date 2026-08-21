@@ -2,7 +2,7 @@
  * 演员管理 Store
  */
 import { defineStore } from "pinia";
-import type { ApiResponse } from "~/types/api";
+import type { ApiResponse, ListResponse } from "~/types/api";
 import type {
   Performer,
   PerformerQuery,
@@ -44,7 +44,7 @@ export const usePerformerStore = defineStore("performer", () => {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<Performer[]>>(
+      const response = await clientApiFetch<ApiResponse<ListResponse<Performer>>>(
         "/api/video/performer",
         {
           method: "GET",
@@ -56,9 +56,9 @@ export const usePerformerStore = defineStore("performer", () => {
         },
       );
 
-      if (response.code === 20000) {
-        state.value.list = (response.data as unknown as Performer[]) || [];
-        state.value.total = response.total || 0;
+      if (response.code === 200) {
+        state.value.list = response.data?.list ?? [];
+        state.value.total = response.data?.total ?? 0;
       }
     } catch (error) {
       console.error("[PerformerStore] 获取演员列表失败:", error);
@@ -82,7 +82,7 @@ export const usePerformerStore = defineStore("performer", () => {
       },
     );
 
-    if (response.code === 20000) {
+    if (response.code === 200) {
       return response.data as unknown as PerformerRequest;
     }
     return null;
@@ -100,7 +100,7 @@ export const usePerformerStore = defineStore("performer", () => {
       },
     );
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
@@ -124,7 +124,7 @@ export const usePerformerStore = defineStore("performer", () => {
       },
     );
 
-    if (data.code === 20000) {
+    if (data.code === 200) {
       await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
@@ -148,7 +148,7 @@ export const usePerformerStore = defineStore("performer", () => {
       },
     );
 
-    if (response.code === 20000 && response.data) {
+    if (response.code === 200 && response.data) {
       await fetchList();
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: "delete", ids });
@@ -199,8 +199,8 @@ export const usePerformerStore = defineStore("performer", () => {
         },
       );
 
-      if (response.code === 20000 && !response.data) {
-        state.value.nameError = response.message || "演员姓名已存在";
+      if (response.code === 200 && !response.data) {
+        state.value.nameError = response.msg || "演员姓名已存在";
       }
     } catch (error) {
       console.error("[PerformerStore] 验证演员姓名失败:", error);

@@ -37,8 +37,8 @@ export default defineApiEventHandler({
       
       // 返回成功响应（标准格式）
       return { 
-        code: 20000,
-        message: '登出成功',
+        code: 200,
+        msg: '登出成功',
         data: null
       }
       

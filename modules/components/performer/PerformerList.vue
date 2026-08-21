@@ -19,6 +19,11 @@ const columns: TableColumn<Performer>[] = [
     cell: ({ row }: any) => row.getValue("birthday") || "-",
   },
   {
+    accessorKey: "debutDate",
+    header: "出道日期",
+    cell: ({ row }: any) => row.getValue("debutDate") || "-",
+  },
+  {
     accessorKey: "height",
     header: "身高(cm)",
     cell: ({ row }: any) => row.getValue("height") || "-",
@@ -29,19 +34,19 @@ const columns: TableColumn<Performer>[] = [
     cell: ({ row }: any) => row.getValue("bust") || "-",
   },
   {
-    accessorKey: "waistSize",
+    accessorKey: "waist",
     header: "腰围(cm)",
-    cell: ({ row }: any) => row.getValue("waistSize") || "-",
+    cell: ({ row }: any) => row.getValue("waist") || "-",
   },
   {
-    accessorKey: "hipCircumference",
+    accessorKey: "hips",
     header: "臀围(cm)",
-    cell: ({ row }: any) => row.getValue("hipCircumference") || "-",
+    cell: ({ row }: any) => row.getValue("hips") || "-",
   },
   {
-    accessorKey: "cupSize",
+    accessorKey: "cup",
     header: "罩杯",
-    cell: ({ row }: any) => row.getValue("cupSize") || "-",
+    cell: ({ row }: any) => row.getValue("cup") || "-",
   },
   {
     accessorKey: "remark",

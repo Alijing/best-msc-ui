@@ -20,13 +20,12 @@ export default defineApiEventHandler({
       
       // 返回检查结果
       return {
-        code: 20000,
-        message: '路径可用',
+        code: 200,
+        msg: '路径可用',
         data: {
           available: isUnique,
           message: isUnique ? '路径可用' : '路径已存在'
-        },
-        success: true
+        }
       }
     } catch (error: any) {
       // 处理异常

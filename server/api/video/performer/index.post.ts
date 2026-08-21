@@ -9,11 +9,12 @@ const bodySchema = z.object({
   name: z.string().min(1, '演员姓名不能为空'),
   enUsName: z.string().optional(),
   birthday: z.string().optional(),
+  debutDate: z.string().optional(),
   height: z.number().positive().int().optional(),
   bust: z.number().positive().int().optional(),
-  waistSize: z.number().positive().int().optional(),
-  hipCircumference: z.number().positive().int().optional(),
-  cupSize: z.string().optional(),
+  waist: z.number().positive().int().optional(),
+  hips: z.number().positive().int().optional(),
+  cup: z.string().optional(),
   hobby: z.string().optional(),
   remark: z.string().optional()
 })

@@ -4,7 +4,7 @@
 import { z } from 'zod'
 import { defineApiEventHandler } from '#server/utils/defineApiEventHandler'
 import { serverApiFetch } from '~/utils/api'
-import type { ApiResponse } from '~/types/api'
+import type { ApiResponse, ListResponse } from '~/types/api'
 import type { Performer } from '~/stores/types/performer'
 
 const querySchema = z.object({
@@ -24,7 +24,7 @@ export default defineApiEventHandler({
     }
     if (name) queryParams.name = name
 
-    return await serverApiFetch<ApiResponse<Performer[]>>(event, '/video/performer/info', {
+    return await serverApiFetch<ApiResponse<ListResponse<Performer>>>(event, '/video/performer/info', {
       method: 'GET',
       query: queryParams
     }, true)

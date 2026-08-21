@@ -24,9 +24,9 @@ export default defineApiEventHandler({
       
       // 返回成功响应
       return {
-        code: 20000,
-        message: '菜单排序更新成功',
-        success: true
+        code: 200,
+        msg: '菜单排序更新成功',
+        data: null
       }
     } catch (error: any) {
       // 处理异常
