@@ -1,34 +1,66 @@
 /**
  * 服务端中间件
- * 
- * 职责：在请求到达时从 cookie 提取 token 并注入到上下文
- * 
- * 为什么需要这个中间件？
- * - Nuxt 服务端渲染时需要知道用户登录状态
- * - 提前解析 cookie，避免每个接口都重复解析
- * - 将登录状态注入到 event.context，其他服务端代码可以直接使用
+ *
+ * 职责：
+ * - 从 cookie 读取登录态并写入 event.context
+ * - 未登录的文档请求在进入 Vue 渲染前直接 302 到登录页
  */
 
-export default defineEventHandler(async (event) => {
-  // ==================== 跳过不必要的路径 ====================
-  // 静态资源、API 路由、开发工具不需要检查
+import type { H3Event } from "h3";
+
+const PUBLIC_PATHS = new Set(["/login", "/register"]);
+
+function shouldBypass(pathname: string) {
   if (
-    event.path.startsWith('/_nuxt') ||      // Vite 构建文件
-    event.path.startsWith('/api') ||         // API 路由（单独处理）
-    event.path.startsWith('/__nuxt_devtools__') || // Nuxt 开发工具
-    event.path.startsWith('/@vite')
+    pathname.startsWith("/_nuxt") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/__nuxt") ||
+    pathname.startsWith("/@") ||
+    pathname.startsWith("/_")
   ) {
-    return
+    return true;
   }
-  
-  // ==================== 解析 Cookie ====================
-  const cookies = parseCookies(event)
-  const hasToken = !!cookies.auth_token
-  
-  // ==================== 注入到上下文 ====================
-  // 这样在其他服务端代码中可以通过 event.context.isLoggedIn 访问
-  event.context.isLoggedIn = hasToken
-  
-  // 调试日志（生产环境可以关闭）
-  console.log(`🔍 [auth-middleware] 路径：${event.path}, 登录状态：${hasToken ? '✅' : '❌'}`)
-})
+
+  const lastSegment = pathname.split("/").pop() ?? "";
+  return lastSegment.includes(".");
+}
+
+function isDocumentRequest(event: H3Event) {
+  const dest = getRequestHeader(event, "sec-fetch-dest");
+  if (dest) return dest === "document";
+
+  const accept = getRequestHeader(event, "accept") ?? "";
+  return accept.includes("text/html");
+}
+
+function toSafeReturnPath(pathname: string, search: string) {
+  if (!pathname.startsWith("/") || pathname.startsWith("//") || pathname.includes("\\")) {
+    return "/";
+  }
+  return `${pathname}${search}`;
+}
+
+export default defineEventHandler((event) => {
+  const url = getRequestURL(event);
+  const { pathname } = url;
+
+  if (shouldBypass(pathname)) {
+    return;
+  }
+
+  const cookies = parseCookies(event);
+  const hasToken = !!cookies.auth_token;
+  event.context.isLoggedIn = hasToken;
+
+  console.log(
+    `🔍 [auth-middleware] 路径：${pathname}, 登录状态：${hasToken ? "✅" : "❌"}`,
+  );
+
+  if (hasToken || PUBLIC_PATHS.has(pathname) || !isDocumentRequest(event)) {
+    return;
+  }
+
+  const returnPath = toSafeReturnPath(pathname, url.search);
+  console.log(`🔒 [auth-middleware] 未登录文档请求，渲染前重定向：${returnPath}`);
+  return sendRedirect(event, `/login?redirect=${encodeURIComponent(returnPath)}`, 302);
+});

@@ -26,7 +26,7 @@ export const useMenuStore = defineStore("menu", () => {
         body: menu,
       });
 
-      await fetchMenuTree();
+      await refreshMenuTree();
       toast.add({
         title: "成功",
         description: "菜单创建成功",
@@ -48,12 +48,15 @@ export const useMenuStore = defineStore("menu", () => {
   };
 
   const fetchMenuTree = async () => {
-    loading.value = true;
     error.value = null;
     try {
-      const response = await clientApiFetch<MenuNode[]>(
-        "/api/system/menu/tree",
-        { method: "GET" },
+      const response = await withListCache(
+        queryKeys.menu.tree,
+        () =>
+          clientApiFetch<MenuNode[]>("/api/system/menu/tree", { method: "GET" }),
+        (value) => {
+          loading.value = value;
+        },
       );
       menus.value = response.data || [];
     } catch (error: unknown) {
@@ -65,9 +68,12 @@ export const useMenuStore = defineStore("menu", () => {
         color: "error",
       });
       throw error;
-    } finally {
-      loading.value = false;
     }
+  };
+
+  const refreshMenuTree = async () => {
+    await invalidateQuery(queryKeys.menu.all);
+    await fetchMenuTree();
   };
 
   const updateMenu = async (menu: UpdateMenu) => {
@@ -79,7 +85,7 @@ export const useMenuStore = defineStore("menu", () => {
         body: menu,
       });
       // 更新成功后刷新菜单
-      await fetchMenuTree();
+      await refreshMenuTree();
       toast.add({
         title: "成功",
         description: "菜单更新成功",
@@ -129,7 +135,7 @@ export const useMenuStore = defineStore("menu", () => {
         color: "success",
       });
 
-      await fetchMenuTree();
+      await refreshMenuTree();
 
       return true;
     } catch (error: unknown) {
@@ -157,7 +163,7 @@ export const useMenuStore = defineStore("menu", () => {
       });
 
       // 排序成功后刷新菜单树
-      await fetchMenuTree();
+      await refreshMenuTree();
       toast.add({
         title: "成功",
         description: "菜单排序更新成功",

@@ -24,12 +24,23 @@ export const useUserStore = defineStore("user", () => {
   /**
    * 从登录响应中设置用户信息
    */
+  function avatarStorageKey(id: string | number) {
+    return `best-msc-avatar:${id}`;
+  }
+
+  function readStoredAvatar(id: string | number) {
+    if (!import.meta.client) {
+      return null;
+    }
+    return localStorage.getItem(avatarStorageKey(id));
+  }
+
   function setUserFromLoginResponse(data: LoginResponse) {
     user.value = {
       id: data.userId,
       username: data.username,
       nickname: data.nickname,
-      avatar: data.avatar,
+      avatar: readStoredAvatar(data.userId) || data.avatar,
       menus: data.menus,
       perms: data.perms,
       roles: data.roles,
@@ -85,8 +96,36 @@ export const useUserStore = defineStore("user", () => {
   }
 
   /**
-   * 用户登出
+   * 头像上传。后端暂无头像接口，先把图片读成 data URL 保存在本地。
    */
+  function uploadAvatar(file: File) {
+    if (!user.value) {
+      return Promise.reject(new Error("请先登录"));
+    }
+    if (!file.type.startsWith("image/")) {
+      return Promise.reject(new Error("请选择图片文件"));
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return Promise.reject(new Error("图片不能超过 2MB"));
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : "";
+        if (!result || !user.value) {
+          reject(new Error("读取图片失败"));
+          return;
+        }
+        user.value = { ...user.value, avatar: result };
+        localStorage.setItem(avatarStorageKey(user.value.id), result);
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error("读取图片失败"));
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function logout() {
     try {
       console.log("👋 [logout] 开始处理登出...");
@@ -116,6 +155,7 @@ export const useUserStore = defineStore("user", () => {
     hasPermission,
     fetchUserInfo,
     setUserFromLoginResponse,
+    uploadAvatar,
     login,
     logout,
   };

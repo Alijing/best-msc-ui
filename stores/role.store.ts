@@ -39,24 +39,28 @@ export const useRoleStore = defineStore("role", () => {
    */
   async function fetchList(query?: Partial<RoleQuery>) {
     try {
-      state.value.loading = true;
-
       if (query) {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<ListResponse<Role>>>("/api/system/role", {
-        method: "GET",
-        query: {
-          pageIndex: state.value.query.pageIndex,
-          pageSize: state.value.query.pageSize,
-          ...(state.value.query.name && { name: state.value.query.name }),
-          ...(state.value.query.code && { code: state.value.query.code }),
-          ...(state.value.query.status !== undefined && {
-            status: state.value.query.status,
+      const snapshot = stableQuery(state.value.query);
+      const response = await withListCache(
+        queryKeys.role.list(snapshot),
+        () =>
+          clientApiFetch<ApiResponse<ListResponse<Role>>>("/api/system/role", {
+            method: "GET",
+            query: {
+              pageIndex: snapshot.pageIndex,
+              pageSize: snapshot.pageSize,
+              ...(snapshot.name && { name: snapshot.name }),
+              ...(snapshot.code && { code: snapshot.code }),
+              ...(snapshot.status !== undefined && { status: snapshot.status }),
+            },
           }),
+        (loading) => {
+          state.value.loading = loading;
         },
-      });
+      );
 
       if (response.code === 200) {
         state.value.list = response.data?.list ?? [];
@@ -66,9 +70,13 @@ export const useRoleStore = defineStore("role", () => {
       console.error("[RoleStore] 获取角色列表失败:", error);
       state.value.list = [];
       state.value.total = 0;
-    } finally {
       state.value.loading = false;
     }
+  }
+
+  async function refreshList() {
+    await invalidateQuery(queryKeys.role.all);
+    await fetchList();
   }
 
   /**
@@ -97,7 +105,7 @@ export const useRoleStore = defineStore("role", () => {
     });
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
     }
 
     return data;
@@ -113,7 +121,7 @@ export const useRoleStore = defineStore("role", () => {
     });
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
     }
 
     return data;
@@ -129,7 +137,7 @@ export const useRoleStore = defineStore("role", () => {
     });
 
     if (response.code === 200 && response.data) {
-      await fetchList();
+      await refreshList();
     }
 
     return response;
@@ -198,23 +206,19 @@ export const useRoleStore = defineStore("role", () => {
    * 获取角色字典
    */
   async function fetchDict() {
-    const cached = useState<DictItem[]>("roleDict", () => []);
-
-    if (cached.value.length > 0) {
-      state.value.roleDict = cached.value;
-      return cached.value;
-    }
-
-    const response = await clientApiFetch<ApiResponse<DictItem[]>>(
-      "/api/system/role/dict",
-      { method: "GET" },
+    const response = await cachedQuery(
+      queryKeys.role.dict,
+      () =>
+        clientApiFetch<ApiResponse<DictItem[]>>("/api/system/role/dict", {
+          method: "GET",
+        }),
+      DICT_STALE_MS,
     );
 
     if (response.code === 200) {
       state.value.roleDict = (response.data as unknown as DictItem[]) || [];
-      cached.value = state.value.roleDict;
     }
-    return response.data;
+    return state.value.roleDict;
   }
 
   return {

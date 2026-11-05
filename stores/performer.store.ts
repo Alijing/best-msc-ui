@@ -38,21 +38,27 @@ export const usePerformerStore = defineStore("performer", () => {
    */
   async function fetchList(query?: Partial<PerformerQuery>) {
     try {
-      state.value.loading = true;
-
       if (query) {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<ListResponse<Performer>>>(
-        "/api/video/performer",
-        {
-          method: "GET",
-          query: {
-            pageIndex: state.value.query.pageIndex,
-            pageSize: state.value.query.pageSize,
-            ...(state.value.query.name && { name: state.value.query.name }),
-          },
+      const snapshot = stableQuery(state.value.query);
+      const response = await withListCache(
+        queryKeys.performer.list(snapshot),
+        () =>
+          clientApiFetch<ApiResponse<ListResponse<Performer>>>(
+            "/api/video/performer",
+            {
+              method: "GET",
+              query: {
+                pageIndex: snapshot.pageIndex,
+                pageSize: snapshot.pageSize,
+                ...(snapshot.name && { name: snapshot.name }),
+              },
+            },
+          ),
+        (loading) => {
+          state.value.loading = loading;
         },
       );
 
@@ -64,9 +70,13 @@ export const usePerformerStore = defineStore("performer", () => {
       console.error("[PerformerStore] 获取演员列表失败:", error);
       state.value.list = [];
       state.value.total = 0;
-    } finally {
       state.value.loading = false;
     }
+  }
+
+  async function refreshList() {
+    await invalidateQuery(queryKeys.performer.all);
+    await fetchList();
   }
 
   /**
@@ -101,7 +111,8 @@ export const usePerformerStore = defineStore("performer", () => {
     );
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
+      await invalidateQuery(queryKeys.performer.dict);
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
         action: "create",
@@ -125,7 +136,8 @@ export const usePerformerStore = defineStore("performer", () => {
     );
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
+      await invalidateQuery(queryKeys.performer.dict);
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, {
         action: "update",
@@ -149,7 +161,8 @@ export const usePerformerStore = defineStore("performer", () => {
     );
 
     if (response.code === 200 && response.data) {
-      await fetchList();
+      await refreshList();
+      await invalidateQuery(queryKeys.performer.dict);
       // 发布演员变更事件，通知其他模块刷新字典
       useEventBus().emit(EVENTS.PERFORMER_CHANGED, { action: "delete", ids });
     }

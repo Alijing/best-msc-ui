@@ -281,15 +281,22 @@ function handleFormSuccess() {
         </UButton>
       </div>
 
-      <div class="flex flex-col" style="max-height: calc(100vh - 420px)">
+      <div class="flex flex-col">
+        <TableSkeleton
+          v-if="performerStore.loading && !performerStore.list.length"
+          :rows="Math.min(performerStore.query.pageSize, 8)"
+          :columns="columns.length"
+        />
         <UTable
+          v-else
           :loading="performerStore.loading"
           loading-animation="elastic"
           :columns="columns"
           :data="performerStore.list || []"
+          :virtualize="listTableVirtualize"
           class="flex-1 min-h-0"
-          sticky
           :ui="{
+            root: listTableRootClass,
             tr: 'odd:bg-gray-50/80 dark:odd:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors',
           }"
         />

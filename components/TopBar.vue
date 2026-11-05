@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useAppStore } from '~/stores/app.store'
 import { useUserStore } from '~/stores/user.store'
+import ConfirmDialog from '~/components/ConfirmDialog.vue'
 
 interface BreadcrumbItem {
   name: string
@@ -13,6 +14,7 @@ defineProps<{
 
 const appStore = useAppStore()
 const userStore = useUserStore()
+const overlay = useOverlay()
 
 // 切换侧边栏折叠状态
 function toggleSidebar() {
@@ -24,8 +26,18 @@ function toggleFullscreen() {
   appStore.toggleFullscreen()
 }
 
-// 登出
 async function handleLogout() {
+  const confirmDialog = overlay.create(ConfirmDialog, {
+    destroyOnClose: true,
+  })
+  const confirmed = await confirmDialog.open({
+    title: '退出登录',
+    message: '确定要退出当前账号吗？',
+    confirmText: '退出',
+  })
+  if (!confirmed) {
+    return
+  }
   await userStore.logout()
   await navigateTo('/login')
 }

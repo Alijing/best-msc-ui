@@ -1,39 +1,44 @@
 /**
  * 用户管理相关类型定义
+ * 字段与后端 SpiderInfo / SpiderQueryParam 对齐
  */
 
-/**
- * 用户数据模型
- */
-export interface User {
+export interface ManagedUser {
   id: number | string
   account: string
   name?: string
   phone?: string
-  role: string
-  createTime: Date
+  roleId?: Array<number | string>
+  roleName?: string
+  departmentId?: Array<number | string>
+  department?: string
+  createTime?: string
 }
 
-/**
- * 用户查询参数
- */
 export interface UserQuery {
   pageIndex: number
   pageSize: number
   account?: string
   name?: string
-  phone?: string
-  role?: string
+  departmentId?: string
 }
 
-/**
- * 用户创建/更新请求
- */
 export interface UserRequest {
   id?: string | number
   account: string
   name: string
-  password?: string
   phone?: string
-  role: string
+  roleId: Array<string | number>
+  departmentId?: Array<string | number>
+}
+
+export interface DepartmentNode {
+  id: number | string
+  name: string
+  children?: DepartmentNode[]
+}
+
+export interface DepartmentOption {
+  id: string
+  name: string
 }

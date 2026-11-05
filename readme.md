@@ -4,13 +4,16 @@
 
 ## 📋 项目概览
 
-Best MSC UI 是一个功能完善的管理后台系统，支持 SSR（服务端渲染），采用前后端一体化架构设计。主要功能包括用户认证、演员字典管理、兴趣视频、角色与菜单管理等模块。
+Best MSC UI 是一个功能完善的管理后台系统，支持 SSR（服务端渲染），采用前后端一体化架构设计。主要功能包括用户认证、演员字典管理、兴趣视频、角色与菜单管理、网页数据采集等模块。
 
 **核心特性**：
+
 - ✅ 完整的认证体系（HttpOnly Cookie + 全局守卫）
 - ✅ 演员字典管理（CRUD + 批量操作）
 - ✅ 兴趣视频管理（多条件查询 + 预览 + 下载）
-- ✅ 角色与菜单管理
+- ✅ 角色、菜单与字典管理
+- ✅ 小说管理（分页查询、维护目录页、下载、批量删除）
+- ✅ 网页数据采集（目录分析、任务进度、导入小说）
 - ✅ 响应式设计 + 暗色模式支持
 - ✅ TypeScript 类型安全
 - ✅ 自动导入机制（组件、Store、Composables）
@@ -23,10 +26,10 @@ Best MSC UI 是一个功能完善的管理后台系统，支持 SSR（服务端�
 
 ### 环境要求
 
-| 工具 | 要求 | 推荐 |
-|------|------|------|
+| 工具    | 要求      | 推荐     |
+|---------|-----------|----------|
 | Node.js | >= 22.0.0 | v22.22.2 |
-| pnpm | >= 9.0.0 | v9.11.0 |
+| pnpm    | >= 9.0.0  | v9.11.0  |
 
 ```bash
 node --version
@@ -61,30 +64,32 @@ pnpm type-check
 
 不必全读，按场景跳转即可。
 
-| 场景 | 看什么 |
-|------|--------|
-| **新人上手** | 本文「快速开始」→ [架构](./docs/architecture.md) → [规范索引](./docs/conventions.md)；装不上再看 [环境 FAQ](./docs/environment.md) |
-| **日常写代码** | [架构](./docs/architecture.md) + [规范索引](./docs/conventions.md)；鉴权改动看 [auth](./docs/auth.md) |
-| **做某功能** | [需求索引](./docs/requirements/README.md) 进对应模块，对照架构里的页面/Store/API |
-| **提 PR** | [.github/pull_request_template.md](./.github/pull_request_template.md) + [CHANGELOG](./CHANGELOG.md) |
-| **用 Cursor** | [`.cursor/rules/`](./.cursor/rules/) |
-| **季度维护** | [MAINTENANCE](./docs/MAINTENANCE.md) |
+| 场景           | 看什么                                                                                                                             |
+|----------------|------------------------------------------------------------------------------------------------------------------------------------|
+| **新人上手**   | 本文「快速开始」→ [架构](./docs/architecture.md) → [规范索引](./docs/conventions.md)；装不上再看 [环境 FAQ](./docs/environment.md) |
+| **日常写代码** | [架构](./docs/architecture.md) + [规范索引](./docs/conventions.md)；鉴权改动看 [auth](./docs/auth.md)                              |
+| **做某功能**   | [需求索引](./docs/requirements/README.md) 进对应模块，对照架构里的页面/Store/API                                                   |
+| **提 PR**      | [.github/pull_request_template.md](./.github/pull_request_template.md) + [CHANGELOG](./CHANGELOG.md)                               |
+| **用 Cursor**  | [`.cursor/rules/`](./.cursor/rules/)                                                                                               |
+| **季度维护**   | [MAINTENANCE](./docs/MAINTENANCE.md)                                                                                               |
 
-**三个真源**：依赖版本 → [package.json](./package.json)；编码约定 → `.cursor/rules/`；模块与目录 → [docs/architecture.md](./docs/architecture.md) + 代码。
+**三个真源**：依赖版本 → [package.json](./package.json)；编码约定 → `.cursor/rules/`
+；模块与目录 → [docs/architecture.md](./docs/architecture.md) + 代码。
 
-**示例**（改兴趣视频）：`requirements/taste.md` → 架构路径 → 改代码 → `pnpm lint` / `type-check` → PR 勾选 taste + 必要时 architecture/CHANGELOG。
+**示例**（改兴趣视频）：`requirements/taste.md` → 架构路径 → 改代码 → `pnpm lint` / `type-check` → PR 勾选 taste + 必要时
+architecture/CHANGELOG。
 
 ## 文档索引
 
-| 文档 | 说明 |
-|------|------|
-| [项目架构](./docs/architecture.md) | 目录、模块、API 概览 |
-| [开发规范索引](./docs/conventions.md) | 人类速查；AI 见 `.cursor/rules/` |
-| [鉴权说明](./docs/auth.md) | HttpOnly Cookie 与三层防护 |
-| [需求规格](./docs/requirements/README.md) | 按模块拆分的需求 |
-| [环境排错](./docs/environment.md) | FAQ |
-| [文档维护](./docs/MAINTENANCE.md) | SSOT、PR 自检、季度审查 |
-| [CHANGELOG](./CHANGELOG.md) | 产品/代码变更记录 |
+| 文档                                      | 说明                             |
+|-------------------------------------------|----------------------------------|
+| [项目架构](./docs/architecture.md)        | 目录、模块、API 概览             |
+| [开发规范索引](./docs/conventions.md)     | 人类速查；AI 见 `.cursor/rules/` |
+| [鉴权说明](./docs/auth.md)                | HttpOnly Cookie 与三层防护       |
+| [需求规格](./docs/requirements/README.md) | 按模块拆分的需求                 |
+| [环境排错](./docs/environment.md)         | FAQ                              |
+| [文档维护](./docs/MAINTENANCE.md)         | SSOT、PR 自检、季度审查          |
+| [CHANGELOG](./CHANGELOG.md)               | 产品/代码变更记录                |
 
 ## 许可证
 

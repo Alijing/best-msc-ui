@@ -4,25 +4,28 @@
 
 ## 优先级
 
-- **P0** — 必须实现  
-- **P1** — 应该实现  
-- **P2** — 可实现  
+- **P0** — 必须实现
+- **P1** — 应该实现
+- **P2** — 可实现
 
 ## 模块索引
 
-| 模块 | 文件 | status | 说明 |
-|------|------|--------|------|
-| 认证 | [auth.md](./auth.md) | `implemented` | 登录、登出、守卫、Cookie |
-| 用户管理 | [user.md](./user.md) | `planned` | 独立用户 CRUD，尚未作为独立页面落地 |
-| 角色管理 | [role.md](./role.md) | `implemented` | `pages/system/role` |
-| 菜单管理 | [menu.md](./menu.md) | `implemented` | `pages/system/menu` |
-| 演员管理 | [performer.md](./performer.md) | `implemented` | `pages/video/performer` |
-| 兴趣视频 | [taste.md](./taste.md) | `implemented` | `pages/video/taste` |
-| 共用 | [shared.md](./shared.md) | — | UI 组件、非功能需求、验收与变更历史 |
+| 模块     | 文件                           | status        | 说明                                |
+|----------|--------------------------------|---------------|-------------------------------------|
+| 认证     | [auth.md](./auth.md)           | `implemented` | 登录、登出、守卫、Cookie            |
+| 用户管理 | [user.md](./user.md)           | `implemented` | `pages/system/user`                 |
+| 角色管理 | [role.md](./role.md)           | `implemented` | `pages/system/role`                 |
+| 菜单管理 | [menu.md](./menu.md)           | `implemented` | `pages/system/menu`                 |
+| 字典管理 | [dict.md](./dict.md)           | `implemented` | `pages/system/dict`                 |
+| 演员管理 | [performer.md](./performer.md) | `implemented` | `pages/video/performer`             |
+| 兴趣视频 | [taste.md](./taste.md)         | `implemented` | `pages/video/taste`                 |
+| 网页采集 | [crawl.md](./crawl.md)         | `implemented` | `pages/crawl/webpage`               |
+| 小说管理 | [novel.md](./novel.md)         | `implemented` | `pages/book/novel`                  |
+| 共用     | [shared.md](./shared.md)       | —             | UI 组件、非功能需求、验收与变更历史 |
 
 演员字典需求见 [架构文档 - 演员字典](../architecture.md#演员字典-)。
 
 ## 维护
 
-- 改功能时同步更新对应模块 `status` 与章节  
+- 改功能时同步更新对应模块 `status` 与章节
 - 编码规范见 [conventions.md](../conventions.md)

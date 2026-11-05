@@ -11,15 +11,25 @@ const props = withDefaults(defineProps<{
 const tasteVideoStore = useTasteVideoStore()
 
 const currentImageIndex = ref(0)
+const zoomed = ref(false)
+const failed = ref<Record<number, boolean>>({})
 
 watch(open, (newVal) => {
   if (newVal && props.videoId) {
     currentImageIndex.value = 0
+    zoomed.value = false
+    failed.value = {}
     tasteVideoStore.fetchPreviewImages(props.videoId)
   } else {
+    zoomed.value = false
+    failed.value = {}
     tasteVideoStore.clearPreviewImages()
   }
 })
+
+const currentImage = computed(
+  () => tasteVideoStore.previewImages[currentImageIndex.value] || ''
+)
 
 const hasMultipleImages = computed(() => tasteVideoStore.previewImages.length > 1)
 const canGoPrev = computed(() => currentImageIndex.value > 0)
@@ -37,18 +47,34 @@ function nextImage() {
   }
 }
 
+function markFailed(index: number) {
+  failed.value = { ...failed.value, [index]: true }
+}
+
+function openZoom() {
+  if (!failed.value[currentImageIndex.value] && currentImage.value) {
+    zoomed.value = true
+  }
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (!open.value) return
+  if (e.key === 'Escape' && zoomed.value) {
+    zoomed.value = false
+    e.preventDefault()
+    e.stopPropagation()
+    return
+  }
   if (e.key === 'ArrowLeft') prevImage()
   if (e.key === 'ArrowRight') nextImage()
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
+  window.addEventListener('keydown', handleKeydown, true)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
+  window.removeEventListener('keydown', handleKeydown, true)
 })
 </script>
 
@@ -56,15 +82,54 @@ onUnmounted(() => {
   <UModal
     v-model:open="open"
     title="视频图片预览"
-    :dismissible="true"
+    :dismissible="!zoomed"
     :ui="{
-      content: 'max-w-4xl w-full',
-      body: 'p-4',
-      header: 'px-4 py-3'
+      content: zoomed ? 'max-w-none w-screen h-screen rounded-none' : 'max-w-4xl w-full',
+      body: zoomed ? 'p-0 h-full bg-black' : 'p-4',
+      header: zoomed ? 'hidden' : 'px-4 py-3'
     }"
   >
     <template #body>
-      <div class="flex flex-col items-center">
+      <div
+        v-if="zoomed && currentImage && !failed[currentImageIndex]"
+        class="relative flex h-full min-h-[70vh] items-center justify-center"
+      >
+        <button
+          type="button"
+          class="absolute top-4 right-4 z-10 text-white"
+          aria-label="关闭放大"
+          @click="zoomed = false"
+        >
+          <UIcon name="i-heroicons-x-mark" class="w-6 h-6" />
+        </button>
+        <button
+          v-if="hasMultipleImages"
+          type="button"
+          class="absolute left-4 z-10 text-white disabled:opacity-30"
+          :disabled="!canGoPrev"
+          aria-label="上一张"
+          @click="prevImage"
+        >
+          <UIcon name="i-heroicons-chevron-left-20-solid" class="w-8 h-8" />
+        </button>
+        <img
+          :src="currentImage"
+          alt="放大预览"
+          class="max-w-[92vw] max-h-[92vh] object-contain"
+          @error="markFailed(currentImageIndex)"
+        >
+        <button
+          v-if="hasMultipleImages"
+          type="button"
+          class="absolute right-4 z-10 text-white disabled:opacity-30"
+          :disabled="!canGoNext"
+          aria-label="下一张"
+          @click="nextImage"
+        >
+          <UIcon name="i-heroicons-chevron-right-20-solid" class="w-8 h-8" />
+        </button>
+      </div>
+      <div v-else class="flex flex-col items-center">
         <template v-if="tasteVideoStore.previewLoading">
           <div class="w-full aspect-video max-h-[400px] flex items-center justify-center">
             <USkeleton class="w-full h-full rounded-lg" />
@@ -74,21 +139,28 @@ onUnmounted(() => {
         <template v-else-if="tasteVideoStore.previewImages.length > 0">
           <div class="relative w-full">
             <div class="flex justify-center items-center min-h-[300px] max-h-[400px]">
-              <NuxtImg
-                v-for="(img, index) in tasteVideoStore.previewImages"
-                :key="img"
-                :src="img"
-                :placeholder="[50, 25, 75, 5]"
-                alt="预览图片"
-                width="640"
-                height="360"
-                class="rounded-lg object-contain transition-opacity duration-300 max-h-[400px]"
-                :class="{ 'hidden': index !== currentImageIndex, 'block': index === currentImageIndex }"
-                fit="contain"
-                quality="80"
-                format="webp"
-                loading="eager"
-              />
+              <button
+                v-if="failed[currentImageIndex]"
+                type="button"
+                class="flex flex-col items-center justify-center gap-2 w-full min-h-[300px] rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800"
+              >
+                <UIcon name="i-heroicons-photo" class="w-16 h-16 opacity-50" />
+                <span class="text-sm">图片加载失败</span>
+              </button>
+              <button
+                v-else
+                type="button"
+                class="cursor-zoom-in"
+                aria-label="放大查看"
+                @click="openZoom"
+              >
+                <img
+                  :src="currentImage"
+                  alt="预览图片"
+                  class="rounded-lg object-contain max-h-[400px]"
+                  @error="markFailed(currentImageIndex)"
+                >
+              </button>
             </div>
 
             <template v-if="hasMultipleImages">
@@ -111,6 +183,31 @@ onUnmounted(() => {
                 <UIcon name="i-heroicons-chevron-right-20-solid" class="w-6 h-6" />
               </UButton>
             </template>
+          </div>
+
+          <div class="mt-4 grid grid-cols-4 sm:grid-cols-6 gap-2 w-full">
+            <button
+              v-for="(img, index) in tasteVideoStore.previewImages"
+              :key="`${img}-${index}`"
+              type="button"
+              class="h-16 rounded border overflow-hidden"
+              :class="index === currentImageIndex ? 'border-primary' : 'border-transparent'"
+              @click="currentImageIndex = index"
+            >
+              <span
+                v-if="failed[index]"
+                class="flex h-full items-center justify-center bg-gray-100 text-gray-400 dark:bg-gray-800"
+              >
+                <UIcon name="i-heroicons-photo" class="w-5 h-5" />
+              </span>
+              <img
+                v-else
+                :src="img"
+                alt=""
+                class="h-full w-full object-cover"
+                @error="markFailed(index)"
+              >
+            </button>
           </div>
 
           <div v-if="hasMultipleImages" class="mt-4 flex items-center justify-center gap-3">

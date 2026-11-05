@@ -51,11 +51,8 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
     const { on } = useEventBus();
     on(EVENTS.PERFORMER_CHANGED, async ({ action }) => {
       console.log("[TasteVideoStore] 检测到演员变更:", action);
-      // 清除缓存，强制重新请求
-      const cached = useState<DictItem[]>("performerDict", () => []);
-      cached.value = [];
       state.value.performerDict = [];
-      // 刷新字典
+      await invalidateQuery(queryKeys.performer.dict);
       await fetchPerformerDict();
     });
   }
@@ -65,35 +62,28 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
    */
   async function fetchList(query?: Partial<TasteVideoQuery>) {
     try {
-      state.value.loading = true;
-
       if (query) {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<ListResponse<TasteVideo>>>(
-        "/api/video/taste",
-        {
-          method: "GET",
-          query: {
-            pageIndex: state.value.query.pageIndex,
-            pageSize: state.value.query.pageSize,
-            ...(state.value.query.number && {
-              number: state.value.query.number,
-            }),
-            ...(state.value.query.performer && {
-              performer: state.value.query.performer,
-            }),
-            ...(state.value.query.rating !== undefined && {
-              rating: state.value.query.rating,
-            }),
-            ...(state.value.query.status !== undefined && {
-              status: state.value.query.status,
-            }),
-            ...(state.value.query.gmtCreate && {
-              gmtCreate: state.value.query.gmtCreate,
-            }),
-          },
+      const snapshot = stableQuery(state.value.query);
+      const response = await withListCache(
+        queryKeys.tasteVideo.list(snapshot),
+        () =>
+          clientApiFetch<ApiResponse<ListResponse<TasteVideo>>>("/api/video/taste", {
+            method: "GET",
+            query: {
+              pageIndex: snapshot.pageIndex,
+              pageSize: snapshot.pageSize,
+              ...(snapshot.number && { number: snapshot.number }),
+              ...(snapshot.performer && { performer: snapshot.performer }),
+              ...(snapshot.rating !== undefined && { rating: snapshot.rating }),
+              ...(snapshot.status !== undefined && { status: snapshot.status }),
+              ...(snapshot.gmtCreate && { gmtCreate: snapshot.gmtCreate }),
+            },
+          }),
+        (loading) => {
+          state.value.loading = loading;
         },
       );
 
@@ -105,9 +95,13 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
       console.error("[TasteVideoStore] 获取视频列表失败:", error);
       state.value.list = [];
       state.value.total = 0;
-    } finally {
       state.value.loading = false;
     }
+  }
+
+  async function refreshList() {
+    await invalidateQuery(queryKeys.tasteVideo.all);
+    await fetchList();
   }
 
   /**
@@ -153,7 +147,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
     );
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
     }
 
     return data;
@@ -172,7 +166,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
     );
 
     if (data.code === 200) {
-      await fetchList();
+      await refreshList();
     }
 
     return data;
@@ -191,7 +185,7 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
     );
 
     if (response.code === 200 && response.data) {
-      await fetchList();
+      await refreshList();
     }
 
     return response;
@@ -201,26 +195,20 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
    * 获取演员字典
    */
   async function fetchPerformerDict() {
-    const cached = useState<DictItem[]>("performerDict", () => []);
-
-    if (cached.value.length > 0) {
-      state.value.performerDict = cached.value;
-      return cached.value;
-    }
-
-    const response = await clientApiFetch<ApiResponse<DictItem[]>>(
-      "/api/video/performer/dict",
-      {
-        method: "GET",
-      },
+    const response = await cachedQuery(
+      queryKeys.performer.dict,
+      () =>
+        clientApiFetch<ApiResponse<DictItem[]>>("/api/video/performer/dict", {
+          method: "GET",
+        }),
+      DICT_STALE_MS,
     );
 
     if (response.code === 200) {
       state.value.performerDict =
         (response.data as unknown as DictItem[]) || [];
-      cached.value = state.value.performerDict;
     }
-    return response.data;
+    return state.value.performerDict;
   }
 
   /**
@@ -309,12 +297,24 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
    * 获取预览图片
    */
   async function fetchPreviewImages(videoId: number | string | null) {
-    state.value.previewLoading = true;
-    state.value.previewImages = [];
+    if (videoId === null || videoId === undefined || videoId === "") {
+      state.value.previewImages = [];
+      state.value.previewLoading = false;
+      return;
+    }
+
+    const key = queryKeys.tasteVideo.preview(videoId);
+    const cached = getQueryClient().getQueryData(key);
+    if (cached === undefined) {
+      state.value.previewLoading = true;
+      state.value.previewImages = [];
+    }
 
     try {
-      const response = await clientApiFetch<ApiResponse<string[]>>(
-        `/api/video/taste/preview/${videoId}`,
+      const response = await cachedQuery(key, () =>
+        clientApiFetch<ApiResponse<string[]>>(
+          `/api/video/taste/preview/${videoId}`,
+        ),
       );
       console.log("[TasteVideoStore] 获取预览图片:", response);
 
@@ -343,6 +343,13 @@ export const useTasteVideoStore = defineStore("tasteVideo", () => {
    * 清除预览图片
    */
   function clearPreviewImages() {
+    if (import.meta.client) {
+      for (const url of state.value.previewImages) {
+        if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      }
+    }
     state.value.previewImages = [];
     state.value.previewLoading = false;
   }

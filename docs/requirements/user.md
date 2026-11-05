@@ -1,12 +1,12 @@
 ﻿---
-status: planned
+status: implemented
 priority: P0
 module: user
 ---
 
-## 二、用户管理模块 🟡
+## 二、用户管理模块
 
-> **模块状态**: 待实现（规划中，以下需求以演员字典模块为模板编写，后续实现时参考）
+> **模块状态**: 已实现。字段以 `SpiderController`（`/sys/spider`）为准：角色、部门为多选；新增时服务端用账号生成初始密码，编辑不修改密码。
 
 ### 2.1 用户列表查询
 
@@ -25,7 +25,7 @@ pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user
 
 ### 详细描述
 
-展示用户列表，支持分页和模糊查询。查询条件包括账号、姓名、电话、角色。表格展示用户基本信息和角色标签。
+展示用户列表，支持分页和模糊查询。查询条件包括账号、姓名、部门。表格展示账号、姓名、电话、角色、部门。
 
 ### 输入
 
@@ -35,8 +35,7 @@ pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user
 - pageSize: number (默认 10)
 - account?: string (模糊匹配)
 - name?: string (模糊匹配)
-- phone?: string (模糊匹配)
-- role?: string (精确匹配，下拉选择，值需通过字典接口获取)
+- departmentId?: string (部门，精确匹配，下拉选择)
 
 ### 输出
 
@@ -50,8 +49,11 @@ id: number | string
 account: string
 name: string
 phone?: string
-role: string
-createTime: Date
+roleId?: Array<number | string>
+roleName?: string
+departmentId?: Array<number | string>
+department?: string
+createTime: string
 }
 
 ### 数据模型
@@ -61,8 +63,7 @@ pageIndex: number
 pageSize: number
 account?: string
 name?: string
-phone?: string
-role?: string
+departmentId?: string
 }
 
 ### 依赖
@@ -75,6 +76,7 @@ role?: string
 
 GET /sys/spider/list # 用户列表
 GET /sys/role/dict # 角色下拉框数据源
+GET /sys/department/simple/list # 部门下拉框数据源
 
 ### 样式要求
 
@@ -112,16 +114,16 @@ modules/system/user/components/UserFormDialog.vue, stores/user-manage.store.ts, 
 
 ### 详细描述
 
-弹窗表单形式新增用户，包含账号、姓名、密码、电话、角色选择。表单验证通过后提交到后端，成功则刷新列表。
+弹窗表单形式新增用户，包含账号、姓名、电话、角色、部门。表单验证通过后提交到后端，成功则刷新列表。初始密码与账号相同，由服务端加密，接口不接收密码。
 
 ### 输入
 
 interface CreateUserRequest {
-account: string (必填，唯一)
+account: string (必填)
 name: string (必填)
-password: string (必填，最少 6 位)
 phone?: string (选填)
-role: 'admin' | 'user' | 'guest' (必填)
+roleId: Array<string | number> (必填)
+departmentId?: Array<string | number>
 }
 
 ### 输出
@@ -150,9 +152,9 @@ role: 'admin' | 'user' | 'guest' (必填)
 ### 其他约束
 
 - 前端表单验证（必填、格式、长度）
-- 账号唯一性校验（后端验证）
-- 密码字段加密传输
-- 角色选项从后端动态加载
+- 账号重复时展示后端错误
+- 初始密码与账号相同，由服务端加密，前端不传密码
+- 角色、部门选项从后端动态加载
 ```
 
 **优先级**: P0 ✅  
@@ -177,16 +179,17 @@ modules/system/user/components/UserFormDialog.vue, stores/user-manage.store.ts, 
 
 ### 详细描述
 
-弹窗表单形式编辑用户，回显用户现有信息。可选择性修改密码（不填则不修改）。提交后刷新列表。
+弹窗表单形式编辑用户，回显用户现有信息。账号只读，不修改密码。提交后刷新列表。
 
 ### 输入
 
 interface UpdateUserRequest {
-account?: string
+id: string | number
+account: string (只读)
 name?: string
-password?: string (选填，不填表示不修改)
 phone?: string
-role?: 'admin' | 'user' | 'guest'
+roleId: Array<string | number>
+departmentId?: Array<string | number>
 }
 
 ### 输出
@@ -210,7 +213,7 @@ role?: 'admin' | 'user' | 'guest'
 
 ### 其他约束
 
-- 编辑模式密码为选填
+- 编辑不修改密码
 - 账号不可编辑（只读）
 - 数据回显准确
 - 取消编辑不保存任何更改
@@ -270,7 +273,7 @@ pages/system/user/index.vue, stores/user-manage.store.ts, server/api/system/user
 - 删除失败时显示具体原因
 ```
 
-**优先级**: P0 🟡  
-**状态**: 待实现（规划中，以演员字典模块为模板）
+**优先级**: P0 ✅  
+**状态**: 已实现
 
 ---

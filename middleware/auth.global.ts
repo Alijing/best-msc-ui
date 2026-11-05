@@ -7,7 +7,7 @@
  * - 支持 SSR 和客户端双重检查
  */
 
-import { parseCookies, sendRedirect } from "h3";
+import { parseCookies } from "h3";
 
 export default defineNuxtRouteMiddleware(async (to, _from) => {
   // ==================== 跳过内部路径 ====================
@@ -34,19 +34,19 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   }
 
   // ==================== SSR 场景：服务端检查 ====================
-  // 在服务端渲染时，直接从 cookie 检查 token，避免客户端二次跳转
+  // 浏览器地址栏的文档请求已由 server/middleware/auth.ts 在渲染前重定向。
+  // 这里处理仍进入渲染器的请求（如 payload），并用 navigateTo 中止当前页渲染。
   if (import.meta.server) {
     const event = useRequestEvent();
     const cookies = parseCookies(event!);
 
-    // 如果没有 token，服务端直接返回重定向（最高效）
     if (!cookies.auth_token) {
       console.log(
         `🔒 [middleware] SSR 检测到未登录，重定向到登录页：${to.fullPath}`,
       );
-      return sendRedirect(
-        event!,
+      return navigateTo(
         `/login?redirect=${encodeURIComponent(to.fullPath)}`,
+        { redirectCode: 302 },
       );
     }
 

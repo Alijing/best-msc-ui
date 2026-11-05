@@ -21,7 +21,7 @@ node_modules/
 # Lingma AI（已弃用，整目录忽略）
 .lingma/
 
-# Trae 规则（已迁移至 .cursor/rules）
+# Trae 配置（规则已迁至 .cursor/rules，skills 已迁至 .cursor/skills）
 .trae/
 
 # 操作系统
@@ -49,3 +49,7 @@ coverage/
 .cache/
 
 # 历史文档已移至 docs/archive/ 并纳入版本管理
+
+
+# Cursor skills
+.cursor/skills/

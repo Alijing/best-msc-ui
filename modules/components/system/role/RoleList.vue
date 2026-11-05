@@ -262,12 +262,20 @@ function handleFormSuccess() {
 
     <!-- 表格区域 -->
     <UCard>
+      <TableSkeleton
+        v-if="roleStore.loading && !roleStore.list.length"
+        :rows="Math.min(roleStore.query.pageSize, 8)"
+        :columns="columns.length"
+      />
       <UTable
+        v-else
         :loading="roleStore.loading"
         loading-animation="elastic"
         :columns="columns"
         :data="roleStore.list || []"
+        :virtualize="listTableVirtualize"
         class="table-fixed"
+        :ui="{ root: listTableRootClass }"
       />
       <!-- 分页 -->
       <div class="mt-4 flex items-center justify-between">

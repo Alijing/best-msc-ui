@@ -131,7 +131,8 @@ export default defineNuxtConfig({
               'pinia',
               '@nuxt/ui',
               '@vue/devtools-core',
-              '@vue/devtools-kit'
+              '@vue/devtools-kit',
+              '@tanstack/vue-query'
           ]
       },
       esbuild: {

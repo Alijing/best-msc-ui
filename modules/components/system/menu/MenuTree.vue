@@ -22,23 +22,31 @@
       </UInput>
     </div>
 
-    <UTable
-      ref="table"
-      v-model:expanded="expanded"
-      v-model:column-filters="columnFilters"
-      :data="menuStore.getMenuTree"
-      :columns="columns"
-      :loading="menuStore.isLoading"
-      :get-row-id="(row: MenuNode) => String(row.id)"
-      :get-sub-rows="(row: MenuNode) => row.children || []"
-      class="flex-1"
-      :ui="{
-        base: 'border-separate border-spacing-0',
-        tbody: 'menu-tbody [&>tr]:last:[&>td]:border-b-0',
-        tr: 'group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
-        td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default',
-      }"
-    />
+    <div class="relative min-h-[240px]">
+      <TableSkeleton
+        v-if="menuStore.isLoading && menuStore.getMenuTree.length === 0"
+        class="absolute inset-0 z-10 bg-default px-1"
+        :columns="4"
+        :rows="6"
+      />
+      <UTable
+        ref="table"
+        v-model:expanded="expanded"
+        v-model:column-filters="columnFilters"
+        :data="menuStore.getMenuTree"
+        :columns="columns"
+        :loading="menuStore.isLoading && menuStore.getMenuTree.length > 0"
+        :get-row-id="(row: MenuNode) => String(row.id)"
+        :get-sub-rows="(row: MenuNode) => row.children || []"
+        class="flex-1"
+        :ui="{
+          base: 'border-separate border-spacing-0',
+          tbody: 'menu-tbody [&>tr]:last:[&>td]:border-b-0',
+          tr: 'group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+          td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default',
+        }"
+      />
+    </div>
 
     <!-- 新增/编辑菜单弹窗 -->
     <MenuFormDialog

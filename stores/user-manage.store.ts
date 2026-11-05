@@ -3,13 +3,35 @@
  */
 import { defineStore } from "pinia";
 import type { ApiResponse, ListResponse } from "~/types/api";
-import type { User, UserQuery } from "~/stores/types/user-manage";
+import type {
+  DepartmentNode,
+  DepartmentOption,
+  ManagedUser,
+  UserQuery,
+  UserRequest,
+} from "~/stores/types/user-manage";
 
 export interface UserManageState {
-  list: User[];
+  list: ManagedUser[];
   total: number;
   loading: boolean;
   query: UserQuery;
+  departments: DepartmentOption[];
+}
+
+function flattenDepartments(
+  nodes: DepartmentNode[] | undefined,
+  prefix = "",
+): DepartmentOption[] {
+  const options: DepartmentOption[] = [];
+  for (const node of nodes ?? []) {
+    const name = prefix ? `${prefix} / ${node.name}` : node.name;
+    options.push({ id: String(node.id), name });
+    if (node.children?.length) {
+      options.push(...flattenDepartments(node.children, name));
+    }
+  }
+  return options;
 }
 
 export const useUserManageStore = defineStore("user-manage", () => {
@@ -22,36 +44,35 @@ export const useUserManageStore = defineStore("user-manage", () => {
       pageSize: 10,
       account: undefined,
       name: undefined,
-      phone: undefined,
-      role: undefined,
+      departmentId: undefined,
     },
+    departments: [],
   }));
 
-  /**
-   * 获取用户列表
-   */
   async function fetchList(query?: Partial<UserQuery>) {
     try {
-      state.value.loading = true;
-
       if (query) {
         state.value.query = { ...state.value.query, ...query };
       }
 
-      const response = await clientApiFetch<ApiResponse<ListResponse<User>>>(
-        "/api/system/user",
-        {
-          method: "GET",
-          query: {
-            pageIndex: state.value.query.pageIndex,
-            pageSize: state.value.query.pageSize,
-            ...(state.value.query.account && {
-              account: state.value.query.account,
-            }),
-            ...(state.value.query.name && { name: state.value.query.name }),
-            ...(state.value.query.phone && { phone: state.value.query.phone }),
-            ...(state.value.query.role && { role: state.value.query.role }),
-          },
+      const snapshot = stableQuery(state.value.query);
+      const response = await withListCache(
+        queryKeys.user.list(snapshot),
+        () =>
+          clientApiFetch<ApiResponse<ListResponse<ManagedUser>>>("/api/system/user", {
+            method: "GET",
+            query: {
+              pageIndex: snapshot.pageIndex,
+              pageSize: snapshot.pageSize,
+              ...(snapshot.account && { account: snapshot.account }),
+              ...(snapshot.name && { name: snapshot.name }),
+              ...(snapshot.departmentId && {
+                departmentId: snapshot.departmentId,
+              }),
+            },
+          }),
+        (loading) => {
+          state.value.loading = loading;
         },
       );
 
@@ -63,22 +84,79 @@ export const useUserManageStore = defineStore("user-manage", () => {
       console.error("[UserManageStore] 获取用户列表失败:", error);
       state.value.list = [];
       state.value.total = 0;
-    } finally {
       state.value.loading = false;
     }
   }
 
-  /**
-   * 重置查询条件
-   */
+  async function refreshList() {
+    await invalidateQuery(queryKeys.user.all);
+    await fetchList();
+  }
+
+  async function fetchDepartments() {
+    const response = await cachedQuery(
+      queryKeys.user.departments,
+      () =>
+        clientApiFetch<ApiResponse<DepartmentNode[]>>(
+          "/api/system/department/simple",
+          { method: "GET" },
+        ),
+      DICT_STALE_MS,
+    );
+
+    if (response.code === 200) {
+      state.value.departments = flattenDepartments(response.data ?? []);
+    }
+
+    return state.value.departments;
+  }
+
+  async function createUser(payload: UserRequest) {
+    const data = await clientApiFetch<ApiResponse<boolean>>("/api/system/user", {
+      method: "POST",
+      body: payload,
+    });
+
+    if (data.code === 200) {
+      await refreshList();
+    }
+
+    return data;
+  }
+
+  async function updateUser(payload: UserRequest) {
+    const data = await clientApiFetch<ApiResponse<boolean>>("/api/system/user", {
+      method: "PUT",
+      body: payload,
+    });
+
+    if (data.code === 200) {
+      await refreshList();
+    }
+
+    return data;
+  }
+
+  async function deleteUsers(ids: Array<string | number>) {
+    const response = await clientApiFetch<ApiResponse<boolean>>("/api/system/user", {
+      method: "DELETE",
+      body: { ids },
+    });
+
+    if (response.code === 200 && response.data) {
+      await refreshList();
+    }
+
+    return response;
+  }
+
   function resetQuery() {
     state.value.query = {
       pageIndex: 1,
       pageSize: 10,
       account: undefined,
       name: undefined,
-      phone: undefined,
-      role: undefined,
+      departmentId: undefined,
     };
   }
 
@@ -87,7 +165,12 @@ export const useUserManageStore = defineStore("user-manage", () => {
     total: computed(() => state.value.total),
     loading: computed(() => state.value.loading),
     query: computed(() => state.value.query),
+    departments: computed(() => state.value.departments),
     fetchList,
+    fetchDepartments,
+    createUser,
+    updateUser,
+    deleteUsers,
     resetQuery,
   };
 });

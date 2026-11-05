@@ -105,7 +105,7 @@ export async function clientApiFetch<T>(
         "Content-Type": "application/json",
         ...options?.headers,
       },
-      timeout: 15000,
+      timeout: options?.timeout ?? 15000,
       retry: 0,
     });
 
@@ -205,4 +205,25 @@ export async function serverApiFetch<T>(
       data: null,
     };
   }
+}
+
+/**
+ * 从 $fetch / createError 中取出后端 msg，供页面提示。
+ */
+export function readApiError(error: unknown, fallback = "请重试"): string {
+  if (error && typeof error === "object") {
+    const detail = error as {
+      message?: string;
+      statusMessage?: string;
+      data?: { msg?: string; message?: string };
+    };
+    return (
+      detail.data?.msg ||
+      detail.data?.message ||
+      detail.statusMessage ||
+      detail.message ||
+      fallback
+    );
+  }
+  return fallback;
 }

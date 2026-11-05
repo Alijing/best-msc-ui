@@ -10,7 +10,7 @@ alwaysApply: false
 
 - 文件：`stores/[name].store.ts`；类型：`stores/types/[name].d.ts`
 - 使用 `defineStore` + Composition API
-- 已有 Store：`user`、`app`、`menu`、`role`、`performer`、`tasteVideo`
+- 已有 Store：`user`、`app`、`menu`、`role`、`performer`、`tasteVideo`、`novel`、`dict`
 
 ## 请求与反馈
 

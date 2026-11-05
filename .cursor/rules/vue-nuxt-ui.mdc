@@ -15,6 +15,20 @@ alwaysApply: false
 
 - 简单：手动校验 + `UInput` 的 `error`
 - 复杂：Zod schema + `UForm`；提交用 `:loading` 防重复
+- 横向表单（`orientation="horizontal"`）的校验提示和字段说明都放在输入框下方，与输入框左对齐。参考 `modules/components/book/novel/NovelFormDialog.vue`
+- 字段说明用 `help`，不要用 `description`。横向布局里 `description` 跟在左侧标签下面
+- 同一字段不要同时写 `help` 和 `#error`。写了 `#error` 后，没有报错时错误区域也会占位，`help` 不会显示
+- 标签列只放标签。`fieldUi` 使用：
+
+```ts
+const fieldUi = {
+  root: "!justify-start items-start",
+  wrapper: "w-[96px] shrink-0 pt-2",
+  container: "flex min-w-0 flex-1 flex-col items-stretch",
+  error: "!mt-1 !ms-0 h-5 overflow-hidden whitespace-nowrap leading-5",
+  help: "mt-1 text-muted",
+};
+```
 
 ## 表格与列表
 

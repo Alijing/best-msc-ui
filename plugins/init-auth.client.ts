@@ -1,51 +1,80 @@
 /**
  * 客户端初始化插件
  *
- * 职责：页面加载时自动从 HttpOnly Cookie 获取用户信息并恢复登录状态
+ * 职责：页面加载时从 HttpOnly Cookie 恢复登录状态。
+ * 登录页、注册页不阻塞挂载；会话恢复成功后再离开这些页面。
  */
 
-export default defineNuxtPlugin(async () => {
-  if (import.meta.client) {
-    const userStore = useUserStore()
-    const isLoggedIn = useState('isLoggedIn', () => false)
+import type { LoginResponse } from "~/stores/types/user";
 
-    try {
-      console.log('🔄 [init-auth] 开始初始化登录状态...')
+const PUBLIC_ROUTES = ["/login", "/register"];
 
-      const response = await $fetch('/api/auth/me', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+async function restoreSession() {
+  const userStore = useUserStore();
+  const isLoggedIn = useState("isLoggedIn", () => false);
 
-      console.log('📦 [init-auth] 响应数据:', response)
+  try {
+    console.log("🔄 [init-auth] 开始初始化登录状态...");
 
-      // 后端成功码为 200
-      if (response.code === 200 && response.data) {
-        userStore.setUserFromLoginResponse(response.data)
+    const response = await $fetch<{
+      code: number;
+      data?: LoginResponse;
+    }>("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-        console.log('📦 [init-auth] 用户信息已更新:', response.data)
-        isLoggedIn.value = true
-        console.log('✅ [init-auth] 登录状态已恢复，用户:', response.data.nickname || response.data.username)
-      } else {
-        console.warn('⚠️ [init-auth] 响应码异常:', response.code)
-        throw new Error('Invalid response')
-      }
+    console.log("📦 [init-auth] 响应数据:", response);
 
-    } catch (error: unknown) {
-      const errorMessage = (error as { data?: { msg?: string } })?.data?.msg || (error as Error)?.message || '请求失败'
-      const errorStatus = (error as { status?: number; statusCode?: number })?.status || (error as { status?: number; statusCode?: number })?.statusCode
-
-      console.error('❌ [init-auth] 请求失败详情:', {
-        message: errorMessage,
-        data: (error as { data?: { msg?: string } })?.data,
-        status: errorStatus
-      })
-
-      isLoggedIn.value = false
-      console.log('⚠️ [init-auth] 用户未登录或 token 过期')
+    if (response.code === 200 && response.data) {
+      userStore.setUserFromLoginResponse(response.data);
+      isLoggedIn.value = true;
+      console.log(
+        "✅ [init-auth] 登录状态已恢复，用户:",
+        response.data.nickname || response.data.username,
+      );
+      return true;
     }
+
+    console.warn("⚠️ [init-auth] 响应码异常:", response.code);
+    throw new Error("Invalid response");
+  } catch (error: unknown) {
+    const errorMessage =
+      (error as { data?: { msg?: string } })?.data?.msg ||
+      (error as Error)?.message ||
+      "请求失败";
+    const errorStatus =
+      (error as { status?: number; statusCode?: number })?.status ||
+      (error as { status?: number; statusCode?: number })?.statusCode;
+
+    console.error("❌ [init-auth] 请求失败详情:", {
+      message: errorMessage,
+      data: (error as { data?: { msg?: string } })?.data,
+      status: errorStatus,
+    });
+
+    isLoggedIn.value = false;
+    console.log("⚠️ [init-auth] 用户未登录或 token 过期");
+    return false;
   }
-})
+}
+
+export default defineNuxtPlugin(() => {
+  const route = useRoute();
+  const restoring = restoreSession();
+
+  if (PUBLIC_ROUTES.includes(route.path)) {
+    void restoring.then((loggedIn) => {
+      if (!loggedIn) return;
+      if (PUBLIC_ROUTES.includes(useRoute().path)) {
+        return navigateTo("/");
+      }
+    });
+    return;
+  }
+
+  return restoring;
+});
